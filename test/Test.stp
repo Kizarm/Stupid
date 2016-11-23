@@ -1,0 +1,24 @@
+// Tato direktiva urcuje konfiguraci automatu, pro kterou je program urcen
+//(na zaklade teto direktivy dojde k optimalnimu nastaveni adresy programu a dat)
+#Configuration "ALLY F"
+NetAddr (1)
+
+var
+fa : real;
+pa : array [2] of real;
+fb : real;
+pb : array [2] of real;
+
+xx : word;
+px : array [2] of word;
+xy : word;
+py : array [2] of word;
+end
+
+if reset then reset'; else
+
+d32 = 10;
+
+endif
+end
+

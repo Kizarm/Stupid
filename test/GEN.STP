@@ -1,0 +1,167 @@
+
+#Configuration "ALLY F"
+NetAddr (0)
+//IOdef (PIOA3.CFG)
+
+VAR kokot:ARRAY [16] OF BIT;
+END
+
+SYMBOL
+y0 # power_sit; 
+y1 # power_gen; 
+y2 # start; 
+y3 # stop; 
+y4 # i_t_voda; 
+y5 # i_t_olej; 
+y6 # i_p_olej; 
+y7 # porucha; 
+y8 # houkacka; 
+y9 # dobijeni; 
+y10 # chyba; 
+END
+// 
+SYMBOL
+x0 # power_ok; 
+x1 # rot; 
+x2 # t_voda; 
+x3 # t_olej; 
+x4 # p_olej; 
+x5 # nebezpeci; 
+x6 # pf1; 
+x7 # pf2; 
+x8 # vyp_houkacky; 
+x9 # test; 
+d0 # stav; 
+END
+// 
+SYMBOL
+780  # U   ; // minimalni napeti baterie ( 30 * U [V])
+3    # T00 ; // doba trvani startu
+6    # T01 ; // cekani mezi starty
+20   # T02 ; // dobijeni
+5    # T03 ; // pausa v dobijeni k ustaleni napeti
+5    # T04 ; // vypadku, kdy jeste nenabehne agregat
+20   # T05 ; // nabehu kontrol
+120  # T06 ; // mozneho noveho vypadku napeti
+20   # T07 ; // doba stopovani motoru generatoru
+20   # T10 ; // doba ustaleni motoru
+200  # MIN ; // minimalni napeti generatoru
+240  # MAX ; // maximalni napeti generatoru
+END
+IF reset then ten0  ; tpa0 ; tdm0' ; toe0 ; t0=0 ENDIF 
+IF reset then ten1' ; tpa1 ; tdm1' ; toe1 ; t1=0 ENDIF 
+IF reset then ten2' ; tpa2 ; tdm2' ; toe2 ; t2=0 ENDIF 
+IF reset then ten3' ; tpa3 ; tdm3' ; toe3 ; t3=0 ENDIF 
+IF reset then ten4' ; tpa4 ; tdm4' ; toe4 ; t4=0 ENDIF 
+IF reset then ten5' ; tpa5 ; tdm5' ; toe5 ; t5=0 ENDIF 
+IF reset then ten6' ; tpa6 ; tdm6' ; toe6 ; t6=0 ENDIF 
+IF reset then ten7  ; tpa7 ; tdm7' ; toe7 ; t7=0 ENDIF 
+// 
+IF reset then d0 = 0 ENDIF 
+IF reset then porucha' ; m2' ;  reset' ENDIF 
+// 
+// tabulka stavu
+IF (d0 = 0 ) then start' ; stop' ; power_gen' ENDIF 
+IF (d0 = 1 ) then power_sit ; t0 = 0 ; d1 = 0 ENDIF 
+// if (d0 = 2 ) then
+IF (d0 = 3 ) then start  ; t0 = 0 ENDIF 
+IF (d0 = 5 ) then start' ; t0 = 0 ; d1 = d1 + 1 ENDIF 
+// if (d0 = 6 ) then
+// if (d0 = 7 ) then
+IF (d0 = 8 ) then start' ; t0 = 0 ENDIF 
+// if (d0 = 9 ) then porucha
+IF (d0 = 10) then start '; power_sit' ; t0 = 0 ENDIF 
+IF (d0 = 11) then power_gen ENDIF 
+// if (d0 = 12) then
+IF (d0 = 13) then t0 = 0 ENDIF 
+// if (d0 = 14) then
+IF (d0 = 15) then t0 = 0 ; power_gen' ENDIF 
+IF (d0 = 16) then stop ; power_sit ENDIF 
+IF (d0 = 17) then stop' ENDIF 
+IF (d0 = 18) then power_gen' ENDIF 
+IF (d0 = 19) then power_sit ; t0 = 0 ENDIF 
+IF (d0 = 20) then stop ENDIF 
+IF (d0 = 21) then stop' ENDIF 
+IF (d0 = 22) then houkacka ENDIF 
+IF (d0 = 23) then porucha ENDIF 
+// 
+// tabulka prechodu
+// 
+IF ((d0 = 0) and start' and power_gen'        ) then d0 = 1 ENDIF 
+IF ((d0 = 1) and power_ok           ) then d0 = 1 ENDIF 
+IF ((d0 = 1) and power_ok'  and pf2  and  pf1' and power_sit and (t0=0) and (d1=0)) then d0 = 2 ENDIF 
+IF ((d0 = 1) and pf1 and power_sit and (t0=0) and (d1=0)) then d0 = 3 ENDIF 
+IF ((d0 = 2) and power_ok'  and     (t0 < T04)) then d0 = 2 ENDIF 
+IF ((d0 = 2) and power_ok'  and     (t0 > T04)) then d0 = 3 ENDIF 
+IF ((d0 = 2) and power_ok           ) then d0 = 1 ENDIF 
+IF ((d0 = 3) and (t0 = 0)   and rot  and start ) then d0 = 4 ENDIF 
+IF ((d0 = 3) and rot'               ) then d0 = 8 ENDIF 
+IF ((d0 = 4) and (t0 < T00) and rot ) then d0 = 4 ENDIF 
+IF ((d0 = 4) and (t0 = T00) and rot ) then d0 = 5 ENDIF 
+IF ((d0 = 4) and rot'               ) then d0 = 8 ENDIF 
+IF ((d0 = 5) and (t0 = 0)   and rot  and start') then d0 = 6 ENDIF 
+IF ((d0 = 5) and rot'               ) then d0 = 8 ENDIF 
+IF ((d0 = 6) and (t0 < T01) and rot ) then d0 = 6 ENDIF 
+IF ((d0 = 6) and rot'               ) then d0 = 8 ENDIF 
+IF ((d0 = 6) and (t0 = T01) and rot ) then d0 = 7 ENDIF 
+IF ((d0 = 7) and (d1 < 3)   and rot ) then d0 = 3 ENDIF 
+IF ((d0 = 7) and (d1 = 3)   and rot ) then d0 = 23  ENDIF // konecny stav - porucha
+IF ((d0 = 7) and rot'               ) then d0 = 8 ENDIF 
+IF ((d0 = 8) and (pf1  and pf2  ) and start') then d0 = 13 ENDIF 
+IF ((d0 = 8) and (pf1' or  pf2' ) and start') then d0 = 9 ENDIF 
+IF ((d0 = 9) and (t0 < T10))           then d0 = 9 ENDIF 
+IF ((d0 = 9) and (t0 = T10))           then d0 = 10 ENDIF 
+IF ((d0 = 10) and (t0 = 0)   and power_sit') then d0 = 11 ENDIF 
+IF ((d0 = 11) and (t0 = T05) and power_gen ) then d0 = 12 ENDIF 
+IF ((d0 = 11) and (t0 < T05) and power_ok' and power_gen ) then d0 = 11 ENDIF 
+IF ((d0 = 11) and pf1' and pf2')      then d0 = 15 ENDIF 
+IF ((d0 = 12) and (chyba' or  pf1))   then d0 = 12 ENDIF 
+IF ((d0 = 12) and chyba )             then d0 = 18 ENDIF 
+IF ((d0 = 12) and power_ok and pf1')  then d0 = 13 ENDIF 
+IF ((d0 = 12) and pf1' and pf2')      then d0 = 15 ENDIF 
+IF ((d0 = 13) and (t0 = 0))           then d0 = 14 ENDIF 
+IF ((d0 = 14) and (t0 < T06))         then d0 = 14 ENDIF 
+IF ((d0 = 14) and (t0 = T06) and power_ok                ) then d0 = 15 ENDIF 
+IF ((d0 = 14) and power_ok')          then d0 = 12 ENDIF 
+IF ((d0 = 14) and pf1' and pf2')      then d0 = 15 ENDIF 
+// if ((d0 = 14) and chyba )             then d0 = 18
+IF ((d0 = 15) and (t0 = 0) and power_gen'                ) then d0 = 16 ENDIF 
+IF ((d0 = 16) and (t0 < T07))         then d0 = 16 ENDIF 
+IF ((d0 = 16) and (t0 = T07) and stop and power_sit      ) then d0 = 17 ENDIF 
+IF ((d0 = 17) and stop' and (pf2 and pf1')               ) then d0 = 0 ENDIF 
+IF ((d0 = 18) and power_gen')         then d0 = 19 ENDIF 
+IF ((d0 = 19) and power_sit and (t0 = 0)                 ) then d0 = 20 ENDIF 
+IF ((d0 = 20) and (t0 < T07))         then d0 = 20 ENDIF 
+IF ((d0 = 20) and (t0 = T07))         then d0 = 21 ENDIF 
+IF ((d0 = 21) and stop' and m2 )      then d0 = 23 ENDIF 
+IF ((d0 = 21) and stop' and m2')      then d0 = 22 ENDIF 
+IF ((d0 = 22) and houkacka     )      then d0 = 23 ENDIF 
+
+// pomocne procedury
+IF test then i_t_voda ; i_t_olej ; i_p_olej ; porucha ; t1 = 0 ; ten1 ENDIF 
+IF (t1 = 2) then i_t_voda' ; i_t_olej' ; i_p_olej' ; porucha' ; d0 = 0 ; m2' ENDIF 
+IF power_gen then power_sit' ENDIF 
+IF power_sit then power_gen' ENDIF 
+// nabijeni
+// if (power_ok') then dobijeni'
+IF (t7   = T02) then dobijeni' ENDIF 
+IF ((t7  = T02 + T03) and (i1 < U)) then dobijeni ENDIF 
+IF (t7   = T02 + T03) then t7 = 0 ENDIF 
+// m0 - napeti generatoru v limitu 200 az 240 V
+IF ((i0 > MIN) and (i0 < MAX)) then m0 ENDIF 
+IF ((i0 < MIN) or  (i0 > MAX)) then m0' ENDIF 
+// indikace poruchovych stavu
+IF (vyp_houkacky     )            then m2 ; houkacka' ENDIF 
+// 
+IF (t_voda  and test')  then i_t_voda' ENDIF 
+IF (t_olej  and test')  then i_t_olej' ENDIF 
+IF (p_olej' and test')  then i_p_olej' ENDIF 
+// 
+IF t_voda' then i_t_voda ENDIF 
+IF t_olej' then i_t_olej ENDIF 
+IF p_olej  then i_p_olej ENDIF 
+// 
+IF (p_olej'  or  nebezpeci ) then chyba   ENDIF // or  m0'
+IF (p_olej   and nebezpeci') then chyba'  ENDIF // and m0
+// 
+END
