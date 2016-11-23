@@ -1,1 +1,1 @@
-/home/mrazik/Dokumenty/prace/pangrac/Hypel/posix/simple/Compiler.h
+../simple/Compiler.h

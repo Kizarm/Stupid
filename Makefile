@@ -20,6 +20,7 @@ endif
 
 all: $(PR)
 
+
 OBJECTS = main.o
 
 $(PR): $(OBJECTS) $(LIBA) $(LIBB)
