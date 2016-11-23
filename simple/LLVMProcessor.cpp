@@ -190,9 +190,11 @@ void LLVMProcessor::c_if() {
   SemPush (LblNum);
   PerNum += 2;
   // a pak jeste nejak obnovi carry
+  
   lle e1 = mainfunc->carry.load ();
   lle e2 = e1.binaryOp ("and", 1);
   lle e3 = e2.binaryOp ("icmp eq", 0);
+  
 }
 void LLVMProcessor::c_else() {
   LblNum++;
@@ -252,8 +254,10 @@ void LLVMProcessor::c_procinit() {
   int count = 0;
   count += snprintf (buffer + count, bufmax - count, "%s\n", pst[m_Type].prefix);
   count += snprintf (buffer + count, bufmax - count, "%s = type { [1024 x i16] }\n", ramdef);
+  
   currentFunction = mainfunc;
   currentFunction->prefix (buffer);
+  
 }
 void LLVMProcessor::c_procend() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
@@ -292,6 +296,7 @@ void LLVMProcessor::c_procend() {
   *currentFunction << CommonTexts.suffix << "\n" << pst[m_Type].suffix << "\n";
   currentFunction->write (testfile);
   fclose (testfile);
+  
 }
 void LLVMProcessor::insertAt (FILE * dst, FILE * src) {
   fseek (src, 0l, SEEK_SET);
@@ -367,6 +372,7 @@ void LLVMProcessor::c_ldbd (unsigned long int n) {
   
   lle e1 = currentFunction->callGetBit(n);
   currentFunction->carry.store(e1);
+  
 }
 void LLVMProcessor::c_stbd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
@@ -756,6 +762,9 @@ void LLVMProcessor::c_stimmd (unsigned long n) {
   getElementPtr(n >> 4);
   fprintf(mf, "  tail call void @WordChangeWrap(i16* %%%ld, i16 %d)\n", PerNum-1, (short) a);
   fprintf(mf, "  store i16 %d, i16* %%%ld, align 2\n", (short) a, PerNum-1);
+  
+  lle e1 = currentFunction->Variables.getelement(n>>4);
+  e1.store ((short) a);
 }
 /** *********************************************************************************************************/
 void LLVMProcessor::relOpWD (const char * op) {
