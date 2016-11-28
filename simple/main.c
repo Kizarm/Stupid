@@ -1,1 +1,1 @@
-/home/mrazik/Dokumenty/prace/pangrac/Hypel/posix/main.c
+../main.c

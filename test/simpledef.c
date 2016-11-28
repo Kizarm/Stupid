@@ -14,7 +14,8 @@ PesApi_t * GetPesApiPtr (void) {
   MainApi.SetRamBase = SetRamBasePtr;   // v MCU lepe inicializovat zde
   MainApi.MainPass   = Simple;          // pokud to bude nekde extra.
   //
-  MainApi.WordChangeDriver = 0;
+  MainApi.WordChangeDriver  = 0;
+  MainApi.DisplayTextDriver = 0;
   return & MainApi;
 }
 void SetRamBasePtr (RamDef_t * ptr) {
@@ -42,12 +43,19 @@ void WcplBit (unsigned bitadr) {
 
 WORD TestPole (const WORD a, const WORD b) {
 #ifndef __arm__
-//  printf ("\ta=%04X, b=%04X\n", a, b);
+  printf ("\ta=%04X, b=%04X\n", a, b);
 #endif
   if (a > b) return b;
   return a;
 }
+short absi (short n) {
+  if (n<0) return -n;
+  else     return +n;
+}
 /** ************************************************************************/
 void WordChangeWrap (WORD * ptr, WORD newdata) {        // volano ze Simple()
-  if (MainApi.WordChangeDriver) MainApi.WordChangeDriver(ptr, newdata);
+  if (MainApi.WordChangeDriver)  MainApi.WordChangeDriver  (ptr, newdata);
+}
+void Disps (char * str) {
+  if (MainApi.DisplayTextDriver) MainApi.DisplayTextDriver (str);
 }

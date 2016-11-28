@@ -1,5 +1,5 @@
-#PREFIX = arm-none-eabi-
-PREFIX =
+PREFIX = arm-none-eabi-
+#PREFIX =
 
 PR = test
 CC = $(PREFIX)gcc

@@ -35,7 +35,8 @@ int LoadLibPes (const char * name) {
   //printf ("%p, %p, %p\n", API, PSimple, PSetRamBasePtr);
   if (PSetRamBasePtr) PSetRamBasePtr (& Variables);
   // set callbacks
-  API->WordChangeDriver = ApiNetDriver;
+  API->WordChangeDriver  = ApiNetDriver;
+  API->DisplayTextDriver = ApiDispText;
   return 0;
 }
 void ExitLibPes (void) {

@@ -13,11 +13,39 @@ xx : word;
 px : array [2] of word;
 xy : word;
 py : array [2] of word;
+
 end
+{
+procedure init (a,b:word; c:real)
+reset'; xx = a; xy = b;
+fa = c; fb = c;
+return
 
-if reset then reset'; else
+function inc(a:word):word;
+inc = a+1;
+return
+}
 
-d32 = 10;
+CONST
+ENUM Nic,Pondeli,Utery,Streda,Ctvrtek,Patek,Sobota,Nedele ;
+END
+procedure test (Den:word)
+CASE Den
+OF Pondeli	THEN	DISPLAY="Po"
+OF Utery	THEN	DISPLAY="Ut"
+OF Streda	THEN	DISPLAY="St"
+OF Ctvrtek	THEN	DISPLAY="Ct"
+OF Patek	THEN	DISPLAY="Pa"
+OF Sobota	THEN	DISPLAY="So"
+OF Nedele	THEN	DISPLAY="Ne"
+ELSE
+			DISPLAY="??"
+ENDCASE
+return
+
+if reset then {init(1,2,3.0)} reset' else
+
+test(5);
 
 endif
 end

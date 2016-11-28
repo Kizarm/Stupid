@@ -23,7 +23,8 @@ struct PesApi_s {
   void (*SetRamBase) (RamDef_t * ptr);
   void (*MainPass)   (void);
   // callbacks
-  void (*WordChangeDriver) (WORD * ptr, WORD newdata);  // lze pouzit pro sitova volani
+  void (*WordChangeDriver)  (WORD * ptr, WORD newdata);  // lze pouzit pro sitova volani
+  void (*DisplayTextDriver) (char * str);
   
 };
 typedef struct PesApi_s PesApi_t;

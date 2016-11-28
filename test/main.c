@@ -17,12 +17,18 @@ static WORD MgetBit (unsigned bitadr) {
 */
 void ApiNetDriver (WORD * ptr, WORD newdata) {
   WORD * base = Variables.Words;
-  size_t index = (ptr - base) / sizeof (WORD);
+  size_t index = (ptr - base);
   WORD olddata = * ptr;
-  if ((index<0x30) || (index>=0x40)) return; // sitove wordy
-  if (olddata == newdata)            return; // stara data jsou stejna
-  printf ("new WORD at %04lX, %04X => %04X\n", index << 1, olddata, newdata);
+//  if ((index<0x30) || (index>=0x40)) return; // sitove wordy
+//  if (olddata == newdata)            return; // stara data jsou stejna
+  printf ("new WORD at %04lX, %04X => %04X\n", index, olddata, newdata);
 }
+void ApiDispText (char * str) {
+  printf ("DISPLAY : \"%s\"\n", str);
+}
+
+
+
 static void MsetBit (unsigned bitadr, WORD bitvalue) {
   BYTE ref = (1u << (bitadr & 0x7));
   if (bitvalue) {

@@ -3,25 +3,7 @@
 
 #include "procesor.h"
 #include "../Compiler.h"
-#include "../LLVMStack.h"
 #include "../llvmcomponent.h"
-
-/*
-enum OperationsTypes {
-  WordOp=0, RealOp,
-  MaxOperationsType
-};
-*/
-enum OperationsCodesNumber {
-  //AddOpC=0, SubOpC, MulOpC, DivOpC, UdivOpC, // ono to fakticky neni potreba
-  MaxOperationsCodeNumber = 16
-};
-struct OperationCodeTexts {
-  int          align;
-  const char * Suffix;
-  const char * OpType;
-  const char * OpName[MaxOperationsCodeNumber];
-};
 
 class LLVMProcessor : public BaseProcessor {
   public:
@@ -242,14 +224,10 @@ class LLVMProcessor : public BaseProcessor {
     void c_popl();                        /*  vyjmi bit ze zasobniku      */
 
     void PopLbl (void);
-    void loadRamPtr   (void);
-    void getElementPtr(unsigned long adr);
-    
+    /*
     void PreDefinitions (void);
     void PreDefinition  (const OperationCodeTexts & text);
-    void AllocaCNew     (void);
-    void RealFromStack  (void);
-    
+    */
     void logOpWpop (const char * op);
     void mathOpIM  (const char * op);
     void mathOpRE  (const char * op);
@@ -259,7 +237,8 @@ class LLVMProcessor : public BaseProcessor {
     
     void relOpWD   (const char * op);
     void relOpWDIM (const char * op);
-    void insertAt  (FILE * dst, FILE * src);
+    void relOpRE   (const char * op);
+    
     struct conv_s {
       const char * from;
       const char * to;
@@ -272,23 +251,21 @@ class LLVMProcessor : public BaseProcessor {
   private:
     const LLVMTypeMachine m_Type;
     const int maxstrs;
-    int           TOC;
-    unsigned long TOCFL;
     
     unsigned long LblNum;
-    unsigned long PerNum;
     unsigned ptrSize;
     char * iFmt;
 
-    FILE * procFile;
+    //FILE * procFile;
     FILE * tempFile;
     int ProcNum;
     int FuncNum;
     
-    LLVMStack mStack;
     bool fromField;
     
-    llfnc * mainfunc;
+    llfnc  * mainfunc;
+    llfnci * funciner;
+    llt      texts;
 };
 
 #endif // LLVMPROCESSOR_H

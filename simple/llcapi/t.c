@@ -1,4 +1,4 @@
-//#include <stdio.h>
+#include <stdio.h>
 
 static volatile int sp = 1;
 
@@ -9,8 +9,12 @@ void test (void) {
   volatile float f = sp;
   sp = f;
 }
+void disp (const char * name) {
+  puts (name);
+}
 
 int main (void) {
   test();
+  disp("pokus");
   return 0;
 }

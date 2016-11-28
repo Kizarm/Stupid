@@ -15,10 +15,7 @@
 
 using namespace std;
 
-enum OperationsTypes {
-  WordOp=0, RealOp,
-  MaxOperationsType
-};
+static vector<lls> bodyFunctions;
 //#define trace(...)
 static void trace (const char * fmt, ...) {
   const int buflen = 0x400;
@@ -28,34 +25,12 @@ static void trace (const char * fmt, ...) {
   vsnprintf (buf, buflen, fmt, arglist);
   va_end (arglist);
   
-  printf  (     "%s", buf);
-  fprintf (mf, ";%s", buf);
+  ///printf  ("%s", buf);
   *currentFunction << ";" << buf;
 }
-
-static OperationCodeTexts const OpCTextsCommon [MaxOperationsType] = {
-  { 2, "Word","i16"  , {  "add", "sub", "mul","udiv","sdiv", NULL }},
-  { 4, "Real","float", { "fadd","fsub","fmul","fdiv", NULL  }}
-};
-void LLVMProcessor::PreDefinitions (void) {
-  PreDefinition (OpCTextsCommon[WordOp]);
-  PreDefinition (OpCTextsCommon[RealOp]);
-}
-// funkce jsou static inline
-void LLVMProcessor::PreDefinition (const OperationCodeTexts & text) {
-  const int m = (int) MaxOperationsCodeNumber;
-  for (int i=0; i<m; i++) {
-    if (!text.OpName[i]) break;
-    fprintf(mf, "\n; Function Attrs: nounwind inline\n");
-    fprintf(mf, "define internal void @%s%s(%s* nocapture %%a, %s* nocapture readonly %%b) #0 {\n",
-      text.OpName[i], text.Suffix, text.OpType,  text.OpType);
-    fprintf(mf, "  %%1 = load %s, %s* %%b, align %d\n", text.OpType, text.OpType, text.align);
-    fprintf(mf, "  %%2 = load %s, %s* %%a, align %d\n", text.OpType, text.OpType, text.align);
-    fprintf(mf, "  %%3 = %s %s %%2, %%1\n", text.OpName[i], text.OpType);
-    fprintf(mf, "  store %s %%3, %s* %%a, align %d\n", text.OpType, text.OpType, text.align);
-    fprintf(mf, "  ret void\n}\n");
-  }
-}
+static lle lastw;
+static lle lastb;
+static lle lindex;
 
 extern char   InpF[80];
 extern char   MacF[80];
@@ -67,7 +42,6 @@ extern char   SupF[80];
 extern int    ListF,MCodeF,SrcF,VerbF;
 extern FILE  * of;
 
-static  const char * vardef = "%Variables";
 static  const char * ramdef = "%union.RamDef_u";
 
 struct LLVMTexts {
@@ -120,12 +94,14 @@ static const LLVMTexts CommonTexts = {
   "declare void @WcplBit(i32) #1\n"
   "declare zeroext i16 @TestPole(i16 zeroext,i16 zeroext) #1\n"
   "declare float @fabsf(float %Val)\n"
+  "declare i16 @absi(i16 %Val)\n"
   "declare float @truncf(float %Val)\n"
+  "declare void @Disps(i8* %Val)\n"
   "declare void @WordChangeWrap(i16* %ptr, i16 %data)\n"
 };
 
 LLVMProcessor::LLVMProcessor (LLVMTypeMachine t) : BaseProcessor(),
-  m_Type (t), maxstrs(256), mStack() {
+  m_Type (t), maxstrs(256), texts() {
   iFmt = NULL;
   ptrSize = 4;
   wpSize  = 4;
@@ -146,26 +122,16 @@ LLVMProcessor::LLVMProcessor (LLVMTypeMachine t) : BaseProcessor(),
   fromField = false;
   
   mainfunc = new llfnc ("Simple");
+  bodyFunctions.clear();
 }
 LLVMProcessor::~LLVMProcessor() {
   if (iFmt) free (iFmt);
   delete mainfunc;
 }
-void LLVMProcessor::loadRamPtr (void) {
-  fprintf(mf,
-    "  %s = load %s*, %s** @RamBasePtr, align %d\n\n",
-    vardef, ramdef, ramdef, ptrSize);
-}
 /**
  * Pravidlo:
  * za kazde "  %%%ld = cosi..." se musi zvysit citac PerNum o 1.
  * */
-void LLVMProcessor::getElementPtr (long unsigned int adr) {
-  fprintf(mf,
-    "  %%%ld = getelementptr inbounds %s, %s* %s, %s 0, i32 0, %s %ld\n",
-    PerNum, ramdef, ramdef, vardef, iFmt, iFmt, adr);
-  PerNum += 1;
-}
 void LLVMProcessor::c_PragmaLj() {
   fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
 }
@@ -173,7 +139,8 @@ void LLVMProcessor::c_PragmaSj() {
   fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
 }
 void LLVMProcessor::PopLbl (void) {
-  fprintf (mf,"\nL%04lX:\n", (unsigned long) SemPop());
+  unsigned long tmp = SemPop();
+  currentFunction->label (tmp);
 }
 
 void LLVMProcessor::c_if() {
@@ -181,26 +148,19 @@ void LLVMProcessor::c_if() {
   LblNum++;
   //-fprintf (stdout, "Funkce:!%s\t->L%04lX\n", __FUNCTION__, LblNum);
   trace ("\t#IF ->L%04lX\n", LblNum);
-  fprintf (mf,"  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
-  fprintf (mf,"  %%%ld = and i16 %%%ld, 1\n", PerNum, PerNum-1);
-  fprintf (mf,"  %%%ld = icmp eq i16 %%%ld, 0\n", PerNum+1, PerNum);
-  fprintf (mf,"  br i1 %%%ld, label %%L%04lX, label %%D%04lX", PerNum+1, LblNum, LblNum);
-  fprintf (mf,"\nD%04lX:\n", LblNum);
   SemPush (LblNum);
-  PerNum += 2;
   // a pak jeste nejak obnovi carry
   
-  lle e1 = mainfunc->carry.load ();
-  lle e2 = e1.binaryOp ("and", 1);
-  lle e3 = e2.binaryOp ("icmp eq", 0);
+  lle e1 = currentFunction->carry.load ();
+  lle e2 = e1.binaryOp ("icmp eq", 0);
+  e2.condBranch (LblNum);
   
 }
 void LLVMProcessor::c_else() {
   LblNum++;
   //-fprintf (stdout, "Funkce:%s\t->L%04lX\n", __FUNCTION__, LblNum);
   trace ("\t#ELSE ->L%04lX\n", LblNum);
-  fprintf (mf,"  br label %%L%04lX\n", LblNum);
+  currentFunction->branch(LblNum);
   PopLbl();
   SemPush (LblNum);
 }
@@ -209,8 +169,9 @@ void LLVMProcessor::c_endif() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   unsigned long tmp = (unsigned long) SemPop();
   trace ("\t#ENDIF ->L%04lX\n", tmp);
-  fprintf (mf,"  br label %%L%04lX\n", tmp);      // llvm musi skocit za sebe !
-  fprintf (mf,"\nL%04lX:\n", tmp);
+  
+  currentFunction->branch(tmp);
+  currentFunction->label (tmp);
 }
 
 void LLVMProcessor::c_procinit() {
@@ -218,9 +179,6 @@ void LLVMProcessor::c_procinit() {
 
   mf=of;
   LblNum = 0;
-  PerNum = 1;
-  TOC    = 0;
-  TOCFL  = 0UL;
   
   ProcNum = 0;
   FuncNum = 0;
@@ -231,44 +189,45 @@ void LLVMProcessor::c_procinit() {
   if (!RamBegin) {
     RamBegin = RAMORG;
   }
+  /*
   procFile = fopen ("data_proc_tmp.txt","w+");
   if (!procFile) {
     fprintf (stderr, "tmp file cannot be open\n");
     exit(-1);
   }
-
+  */
   RamPtr=RamBegin;
 
   AddInfo ("\nImplementace pro LLVM, Kizarm - testing\n");
 
-  fprintf (mf,"%s\n", pst[m_Type].prefix);
-  fprintf (mf,"%s = type { [1024 x i16] }\n", ramdef);
-///  PreDefinitions();
-  mStack.Declare();
-  fprintf (mf,"%s", CommonTexts.prefix);
-  mStack.Define(16, iFmt);
-  loadRamPtr();
-  
+  currentFunction = mainfunc;
   const int bufmax = 0x400;
   char buffer [bufmax];
   int count = 0;
   count += snprintf (buffer + count, bufmax - count, "%s\n", pst[m_Type].prefix);
-  count += snprintf (buffer + count, bufmax - count, "%s = type { [1024 x i16] }\n", ramdef);
+  count += snprintf (buffer + count, bufmax - count, "%s = type { [1024 x i16] }\n\n", ramdef);
+  *currentFunction << buffer;
   
-  currentFunction = mainfunc;
-  currentFunction->prefix (buffer);
+  currentFunction->declare();
   
 }
 void LLVMProcessor::c_procend() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   long int a,b;
-//   char c;
-  // copy procFile -> mf
-  fprintf (mf,"\nret void\n}\n");
-  insertAt(mf, procFile);
-  fprintf (mf,"%s\n", CommonTexts.suffix);
-  fprintf (mf,"%s\n", pst[m_Type].suffix);
+  
+  currentFunction->exit();
+  if (!bodyFunctions.empty()) {
+    int i, n = bodyFunctions.size();
+    for (i=0; i<n; i++) {
+      lls str = bodyFunctions.at (i);
+      *currentFunction << str;
+    }
+  }
+  texts.close(*currentFunction);
+  *currentFunction << CommonTexts.suffix << "\n" << pst[m_Type].suffix << "\n";
+  currentFunction->write (mf);
   fclose (mf);
+  
   char * copy = new char [1024];
   strncpy (copy, MacF, 1024);
   strcat (copy, ".ll");
@@ -286,58 +245,27 @@ void LLVMProcessor::c_procend() {
   AddInfo ("\nProgram           ... %04LXH",RomBegin);
   AddInfo ("\nPromenne          ... %04LXH",b);
   AddInfo (" - %04LXH\n",a);
-  AddInfo ("\tTOC = %d\n", TOC);
 
+  /*
   fclose (procFile);
   remove ("data_proc_tmp.txt");
-  
-  FILE * testfile = fopen ("test.cc.ll","w");
-  currentFunction->exit();
-  *currentFunction << CommonTexts.suffix << "\n" << pst[m_Type].suffix << "\n";
-  currentFunction->write (testfile);
-  fclose (testfile);
-  
-}
-void LLVMProcessor::insertAt (FILE * dst, FILE * src) {
-  fseek (src, 0l, SEEK_SET);
-  const size_t max = 1024;
-  char buf [max];
-  size_t copied = 0;
-  for (;;) {
-    size_t n = fread (buf, 1, max, src);
-    if (n == 0)  break;
-    size_t m = fwrite(buf, 1, n,   dst);
-    copied += m;
-    if (m == 0)  break;
-    if (n < max) break;
-  }
-  trace ("Zkopirovano : %ld bytes\n", copied);
+  */
 }
 
 /** *************************************************************************/
-void LLVMProcessor::AllocaCNew (void) {
-  if (TOC >= 8 * (int) sizeof (unsigned long)) fprintf (stderr, "Preteceni zasobniku Carry\n");
-  if (((1UL << TOC) & TOCFL) == 0UL) {
-    TOCFL |= 1UL << TOC;
-    fprintf(mf, "  %%T%dOC = alloca i16, align 2\n", TOC);
-  }
-}
 
 void LLVMProcessor::c_pushl() {
-  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace   ("\tPUSH CARRY; TOC++\n");
-  fprintf (mf, "  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  AllocaCNew();
-  fprintf (mf, "  store i16 %%%ld, i16* %%T%dOC, align 2\n", PerNum, TOC);
-  PerNum += 1;
-  TOC    += 1;
+  lle e0 = currentFunction->bstack.stackptrw(PushWord);
+  lle e1 = currentFunction->carry.load();
+  e0.store(e1);
 }
 void LLVMProcessor::c_popl() {
-  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace   ("\tPOP CARRY [->last %%var, nemeni %%carry]; --TOC\n");
-  TOC    -= 1;
-  fprintf (mf, "  %%%ld = load i16, i16* %%T%dOC, align 2\n", PerNum, TOC);
-  PerNum += 1;
+  lle e0 = currentFunction->bstack.stackptrw(PopWord);
+  lastb  = e0.load();
 }
 /*---------------------------------------------------------------------------*/
 /*   Bitove operace                                                          */
@@ -347,28 +275,28 @@ void LLVMProcessor::c_setbd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   PredefAdr (n);
   trace  ("\tBIT[%04lX]=%04lX.%lX SET DIRECT\n", n, n>>3, n&7);
-  fprintf (mf, "  tail call void @WsetBit(i32 %ld, i16 zeroext 1) #2\n", n);
+  
+  currentFunction->callVoid ("WsetBit", n, 1);
 }
 void LLVMProcessor::c_resbd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   PredefAdr (n);
   trace  ("\tBIT[%04lX]=%04lX.%lX RESET DIRECT\n", n, n>>3, n&7);
-  fprintf (mf, "  tail call void @WsetBit(i32 %ld, i16 zeroext 0) #2\n", n);
+  
+  currentFunction->callVoid ("WsetBit", n, 0);
 }
 void LLVMProcessor::c_invbd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   PredefAdr (n);
   trace  ("\tBIT[%04lX]=%04lX.%lX CPL DIRECT\n", n, n>>3, n&7);
-  fprintf (mf, "  tail call void @WcplBit(i32 %ld) #2\n", n);
+  
+  currentFunction->callVoid ("WcplBit", n);
 }
 void LLVMProcessor::c_ldbd (unsigned long int n) {
   // do carry da bit na adrese n
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   trace  ("\tBIT %04lX.%lX -> CARRY\n", n>>3, n&7);
   PredefAdr (n);
-  fprintf (mf, "  %%%ld = tail call zeroext i16 @WgetBit(i32 %ld) #2\n", PerNum, n);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
   
   lle e1 = currentFunction->callGetBit(n);
   currentFunction->carry.store(e1);
@@ -378,26 +306,25 @@ void LLVMProcessor::c_stbd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   trace  ("\tCARRY -> BIT %04lX.%lX\n", n>>3, n&7);
   PredefAdr (n);
-  fprintf (mf, "  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  fprintf (mf, "  tail call void @WsetBit(i32 %ld, i16 zeroext %%%ld) #2\n", n, PerNum);
-  PerNum += 1;
+  
+  lle e0 = currentFunction->carry.load();
+  currentFunction->callVoid ("WsetBit", n, e0);
 }
 void LLVMProcessor::logOpBD (const char * op, bool inv, long unsigned int n) {
   PredefAdr (n);
   if (inv) trace  ("\tBIT %04lX.%lX DIRECT not %s CARRY -> CARRY\n", n>>3, n&7, op);
   else     trace  ("\tBIT %04lX.%lX DIRECT     %s CARRY -> CARRY\n", n>>3, n&7, op);
   PredefAdr (n);
-  fprintf (mf, "  %%%ld = tail call zeroext i16 @WgetBit(i32 %ld) #2\n", PerNum, n);
-  PerNum += 1;
+  lle e1 = currentFunction->callGetBit(n);
+  lle e2 = currentFunction->carry.load();
+  lle e3;
   if (inv) {
-    fprintf (mf, "  %%%ld = xor i16 %%%ld, -1\n", PerNum, PerNum-1);        // negace operandu
-    PerNum += 1;
+    lle e0 = e1.binaryOp ("xor", 1);
+        e3 = e0.binaryOp (op, e2);
+  } else {
+        e3 = e1.binaryOp (op, e2);
   }
-  fprintf (mf, "  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = %s i16 %%%ld, %%%ld\n", PerNum, op, PerNum-2, PerNum-1);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
+  currentFunction->carry.store (e3);
 }
 
 void LLVMProcessor::c_orbd (unsigned long int n) {
@@ -419,11 +346,10 @@ void LLVMProcessor::c_nandbd (unsigned long int n) {
 void LLVMProcessor::logOpWpop (const char * op) {
   c_popl();
   trace   ("\tCARRY %s POP[CARRY] -> CARRY\n", op);
-  fprintf (mf, "  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = %s i16 %%%ld, %%%ld\n", PerNum, op, PerNum-1, PerNum-2);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
+  
+  lle e0 = currentFunction->carry.load();
+  lle e3 = e0.binaryOp (op, lastb);
+  currentFunction->carry.store(e3);
 
 }
 void LLVMProcessor::c_orb() {
@@ -441,11 +367,10 @@ void LLVMProcessor::c_xorb() {
 void LLVMProcessor::c_notb() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace  ("\tBIT CARRY NOT\n");
-  fprintf (mf, "  %%%ld = load i16, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = xor i16 %%%ld, -1\n", PerNum, PerNum-1);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
+  
+  lle e0 = currentFunction->carry.load();
+  lle e1 = e0.binaryOp ("xor", 1);
+  currentFunction->carry.store(e1);
 }
 
 union R2U {
@@ -456,66 +381,33 @@ union R2U {
   u_int32_t hl;
   float x;
 };
-union D2U {
-  u_int64_t u;
-  double    d;
-};
-/** Vypada to, ze interne je pouzita zasobnikova neco jako RPN.
- *  c_ldrim() nacte konstantu                    +1
- *  c_ldaim() nacte adresu na vrchol zasobniku
- *  c_ldri () nacte operand dany c_ldaim()       +1
- * 
- *  c_stri () ulozi na adresu %RegHL             -1
- * 
- *  c_operace() provede operaci nad zasobnikem   -1 (binarni - ze 2 poslednich da vysledek do posledniho)
- * 
- * Na konci by mela byt 0.
- * 
- * Zkusime optimalizaci pomoci inline funkci misto pouziti pomocneho zasobniku. Zasady:
- *      Prevedeno do samostatne tridy LLVMStack.
- * Nevyhody:
- *      - velke mnozstvi preddefinovanych inline funkci.
- * Vyhody:
- *      - umozni lepsi optimalizaci LLVM opt.
- *      - a asi i prehlednejsi
- * */
 
 void LLVMProcessor::c_ldaim (unsigned long int a) {
   //-fprintf (stdout, "Funkce:%s\t%08lX ->>>>>>>>>> je v bytech\n", __FUNCTION__, a);
   trace        ("\tNacteni adresy %04lX do TOS; TOS++\n", a >> 4);
-  fprintf (mf, ";\tNacteni adresy %04lX do TOS; TOS++\n", a >> 4);
   PredefAdr (a);
-  mStack.PushAddrInBytes (a >> 3, PerNum);
+  
+  currentFunction->wstack.pusha(a >> 3);
 }
-void LLVMProcessor::RealFromStack (void) {
-  mStack.PopWord(PerNum);                                               // index v bytech
-  fprintf(mf,"  %%%ld = ashr i16 %%%ld, 1\n", PerNum, PerNum-1);        // index ve WORD
-  PerNum += 1;
-  fprintf(mf,
-    "  %%%ld = getelementptr inbounds %s, %s* %s, %s 0, i32 0, i16 %%%ld\n",
-    PerNum, ramdef, ramdef, vardef, iFmt, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = bitcast i16* %%%ld to float*\n", PerNum, PerNum-1);
-  PerNum += 1;
-}
-
 void LLVMProcessor::c_stri() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   if (fromField) {
     trace        ("\tSTORE REAL TO FIELD -> @TOS; --TOS\n");
-    fprintf (mf, ";\tSTORE REAL TO FIELD -> @TOS; --TOS\n");
-    mStack.PopReal(PerNum);
-    fprintf (mf,"  %%%ld = bitcast i16* %%%ld to float*\n", PerNum, PerNum-4);
-    PerNum += 1;
-    fprintf (mf,"  store float %%%ld, float* %%%ld, align 4\n\n", PerNum-2, PerNum-1);
+    lle e0 = currentFunction->wstack.stackptrr(PopReal);
+    lle e1 = lastw.bitcast ("float*");
+    lle e3 = e0.load();
+    e1.store(e3);
   } else {
     trace        ("\tSTORE REAL @TOS-1 -> @TOS; TOS-=2\n");
-    fprintf (mf, ";\tSTORE REAL @TOS-1 -> @TOS; TOS-=2\n");
-    RealFromStack();
-    mStack.PopReal(PerNum);
-    fprintf (mf, "  store float %%%ld, float* %%%ld, align 4\n\n", PerNum-1, PerNum-4);
+    lle e0 = currentFunction->wstack.stackptrw(PopWord);
+    lle e1 = currentFunction->wstack.stackptrr(PopReal);
+    lle e4 = e1.load();			// ulozeny real
+    lle e2 = e0.load();
+    lle e5 = e2.binaryOp("ashr", 1);	// adresa je v bytech
+    lle e3 = currentFunction->Variables.getelementr(e5);
+    e3.store(e4);
   }
-  mStack.ZeroTest();
+  currentFunction->wstack.test();
   fromField = false;
 }
 void LLVMProcessor::c_ldri() {
@@ -523,19 +415,20 @@ void LLVMProcessor::c_ldri() {
   /*  load indirect operand  */
   if (fromField) {
     trace       ("\tLOAD REAL FROM FIELD -> @TOS++;\n");
-    fprintf (mf,";\tLOAD REAL FROM FIELD -> @TOS++;\n");
-    fprintf (mf,"  %%%ld = bitcast i16* %%%ld to float*\n", PerNum, PerNum-1);
-    PerNum += 1;
-    fprintf (mf,"  %%%ld = load float, float* %%%ld, align 2\n",   PerNum, PerNum-1);
-    PerNum += 1;
-    mStack.PushReal(PerNum);
+    lle e0 = currentFunction->wstack.stackptrr(PushReal);
+    lle e1 = lastw.bitcast ("float*");
+    lle e3 = e1.load();
+    e0.store(e3);
   } else {
-    trace       ("\tLOAD REAL @TOS -> @TOS;\n");
-    fprintf (mf,";\tLOAD REAL @TOS -> @TOS;\n");
-    RealFromStack();
-    fprintf (mf, "  %%%ld = load float, float* %%%ld, align 4\n", PerNum, PerNum-1);
-    PerNum += 1;
-    mStack.PushReal(PerNum);
+    trace       ("\tLOAD REAL @TOS -> @TOS\n");
+    lle e0 = currentFunction->wstack.stackptrw(PopWord);
+    lle e1 = e0.load();
+    lle e2 = e1.binaryOp("ashr", 1);	// adresa je v bytech
+    lle e3 = currentFunction->Variables.getelementr(e2);
+    lle e4 = e3.load();
+    
+    lle e5 = currentFunction->wstack.stackptrr(PushReal);
+    e5.store(e4);
   }
   fromField = false;
 }
@@ -546,12 +439,20 @@ void LLVMProcessor::c_ldrim() {
   t.l = SemPop();
   d.d = t.x;    // musi byt double a z toho teprve hex string
   trace  ("\tLOAD IMM %g, 0x%016lX -> @TOS; TOS++\n", t.x, d.u);
-  mStack.PushImmReal (d.u, PerNum);
+  lle e0 = currentFunction->wstack.stackptrr(PushReal);
+  e0.stored (d.d);
+  
 }
 void LLVMProcessor::mathOpRE (const char * op) {
   trace   ("\t! REAL @TOS %s @TOS-1 -> @TOS; --TOS\n", op);
-  mStack.PopRealPtr(PerNum);
-  fprintf (mf,"  tail call void @%sReal(float* %%%ld, float* %%%ld)\n", op, PerNum-1, PerNum-3);
+  lle e0 = currentFunction->wstack.stackptrr(PopReal);
+  lle e1 = currentFunction->wstack.stackptrr(PopReal);
+  lle e2 = e0.load();
+  lle e3 = e1.load();
+  lle e4 = e3.binaryOp (op, e2);
+  
+  lle e5 = currentFunction->wstack.stackptrr(PushReal);
+  e5.store(e4);
 }
 void LLVMProcessor::c_addr() {
   //-fprintf  (stdout, "Funkce:%s\n", __FUNCTION__);
@@ -574,38 +475,32 @@ void LLVMProcessor::c_divr() {
 void LLVMProcessor::c_chsr() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace       ("\tREAL @TOS -> -@TOS\n");
-  fprintf (mf,";\tREAL @TOS -> -@TOS\n");
-  mStack.CurrentRealPtr(PerNum);
-  unsigned long last = PerNum - 1;
-  fprintf (mf, "  %%%ld = load float, float* %%%ld, align 2\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = fsub float 0.0, %%%ld\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  store float %%%ld, float* %%%ld, align 4\n", PerNum-1, last);
+  lle e0 = currentFunction->wstack.stackptrr(CurrentReal);
+  lle e1 = e0.load();
+  lle e2 (e1);
+  e2.body << "  " << e2.name << " = fsub float 0.0, " << e1.name << "\n";
+  * currentFunction << e2.body;
+  e0.store(e2);
 }
 void LLVMProcessor::c_absr() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace       ("\tREAL @TOS -> abs @TOS\n");
-  fprintf (mf,";\tREAL @TOS -> abs @TOS\n");
-  mStack.CurrentRealPtr(PerNum);
-  unsigned long last = PerNum - 1;
-  fprintf (mf, "  %%%ld = load float, float* %%%ld, align 2\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = tail call float @fabsf(float %%%ld)\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  store float %%%ld, float* %%%ld, align 4\n", PerNum-1, last);
+  lle e0 = currentFunction->wstack.stackptrr(CurrentReal);
+  lle e1 = e0.load();
+  lle e2 (e1);
+  e2.body << "  " << e2.name << " = tail call float @fabsf(float " << e1.name << ")\n";
+  * currentFunction << e2.body;
+  e0.store(e2);
 }
 void LLVMProcessor::c_truncr() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace       ("\tREAL @TOS -> abs @TOS\n");
-  fprintf (mf,";\tREAL @TOS -> abs @TOS\n");
-  mStack.CurrentRealPtr(PerNum);
-  unsigned long last = PerNum - 1;
-  fprintf (mf, "  %%%ld = load float, float* %%%ld, align 2\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = tail call float @truncf(float %%%ld)\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf, "  store float %%%ld, float* %%%ld, align 4\n", PerNum-1, last);
+  lle e0 = currentFunction->wstack.stackptrr(CurrentReal);
+  lle e1 = e0.load();
+  lle e2 (e1);
+  e2.body << "  " << e2.name << " = tail call float @truncf(float " << e1.name << ")\n";
+  * currentFunction << e2.body;
+  e0.store(e2);
 }
 
 /** *********************************************************************************************************/
@@ -613,86 +508,97 @@ void LLVMProcessor::c_testpole() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   unsigned long a = SemPop();  // adresa konce pole v bytech
   trace       ("\tTEST POLE %04lX; --TOS\n", a);
-  fprintf (mf,";\tTEST POLE %04lX; --TOS\n", a);
-  mStack.PopWord(PerNum);
-  fprintf(mf,"  %%%ld = ashr i16 %%%ld, 1\n", PerNum, PerNum-1);                 // index ve WORD
-  PerNum += 1; /// vrati omezenou adresu WORD, par: pozadavek, konec [ve WORD adress]
-  fprintf(mf,"  %%%ld = tail call i16 @TestPole (i16 %%%ld, i16 %d)\n\n",
-          PerNum, PerNum-1, (short) a >> 1);
-  PerNum += 1;
-  fprintf(mf,
-    "  %%%ld = getelementptr inbounds %s, %s* %s, %s 0, i32 0, i16 %%%ld\n",    // OK, mame word ptr
-    PerNum, ramdef, ramdef, vardef, iFmt, PerNum-1);
-  PerNum += 1;  /// zde se vraci ptr na prvek pole, se kterym se dal bude pracovat
   fromField = true;
+  
+  lle e0 = currentFunction->wstack.stackptrw(PopWord);
+  lle e1 = e0.load();
+  lindex = e1.callTest((short) a);	// v bytech
+  /// zde se vraci ptr na prvek pole, se kterym se dal bude pracovat
+  lle e2  = lindex.binaryOp("ashr", 1);
+  lastw   = currentFunction->Variables.getelement(e2);
 }
 /** *********************************************************************************************************/
 void LLVMProcessor::c_ldwi() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace        ("\tLOAD  INDIRECT WORD; ++TOS\n");
-  fprintf  (mf,";\tLOAD  INDIRECT WORD; ++TOS\n");
-  fprintf(mf, "  %%%ld = load i16, i16* %%%ld, align 2\n", PerNum, PerNum-1);         // data
-  PerNum += 1;
-  mStack.PushWordAtCurrent(PerNum);
   fromField = false;
+  
+  lle e0 = lastw.load();
+  lle e1 = currentFunction->wstack.stackptrw(PushWord);
+  e1.store(e0);
 }
 void LLVMProcessor::c_stwi() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace       ("\tSTORE INDIRECT WORD; --TOS ;\n");
-  fprintf (mf,";\tSTORE INDIRECT WORD; --TOS ;\n");
-  mStack.PopWordAtCurrent(PerNum);
-  mStack.ZeroTest();
   fromField = false;
+  
+  lle e0 = currentFunction->wstack.stackptrw(PopWord);
+  lle e1 = e0.load();
+  lastw.wordChange(e1);
+  lastw.store     (e1);
+
+  currentFunction->wstack.test();
 }
 void LLVMProcessor::c_ldwim() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   unsigned long a = SemPop();
   trace       ("\tLOAD IMM WORD 0x%04lX -> @TOS; TOS++\n", a);
-  fprintf (mf,";\tLOAD IMM WORD 0x%04lX -> @TOS; TOS++\n", a);
-  mStack.PushImmWord (a, PerNum);
+  lle e0 = currentFunction->wstack.stackptrw(PushWord);
+  e0.store (a);
 }
+
 void LLVMProcessor::c_ldwd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   PredefAdr (n);
-  
   trace       ("\tLOAD WORD @W%04lX -> @TOS; TOS++\n", n >> 4);
-  fprintf (mf,";\tLOAD WORD @W%04lX -> @TOS; TOS++\n", n >> 4);
-  getElementPtr(n >> 4);
-  fprintf(mf, "  %%%ld = load i16, i16* %%%ld, align 2\n", PerNum, PerNum-1);
-  PerNum += 1;
-  mStack.PushWordAtCurrent(PerNum);
+  lle e1 = currentFunction->Variables.getelement (n >> 4);
+  lle e2 = e1.load();
+  lastw  = currentFunction->wstack.stackptrw (PushWord);
+  lastw.store(e2);
 }
 void LLVMProcessor::c_stwd (unsigned long int n) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   trace       ("\tSTORE @TOS -> WORD @W%04lX; --TOS\n", n >> 4);
-  fprintf (mf,";\tSTORE @TOS -> WORD @W%04lX; --TOS\n", n >> 4);
   PredefAdr (n);
-  getElementPtr(n >> 4);
-  mStack.PopWordAtCurrent(PerNum);
-  mStack.ZeroTest();
+  lle e1 = currentFunction->Variables.getelement (n >> 4);
+  lle e2 = currentFunction->wstack.stackptrw(PopWord);
+  lle e3 = e2.load();
+  e1.wordChange(e3);
+  e1.store     (e3);
+  
+  currentFunction->wstack.test();
 }
 void LLVMProcessor::mathOpWDS (const char * op) {
   trace         ("\t! WORD @TOS-1 %s @TOS -> @TOS; --TOS;\n", op);
-  fprintf (mf,"\n;\t! WORD @TOS-1 %s @TOS -> @TOS; --TOS;\n", op);
-  mStack.PopWordPtr (PerNum);
-  fprintf (mf,"  tail call void @%sWord(i16* %%%ld, i16* %%%ld)\n", op, PerNum-1, PerNum-3);
+  lle e0 = currentFunction->wstack.stackptrw(PopWord);
+  lle e1 = currentFunction->wstack.stackptrw(PopWord);
+  lle e2 = e0.load();
+  lle e3 = e1.load();
+  lle e4 = e2.binaryOp (op, e3);
+  lle e5 = currentFunction->wstack.stackptrw(PushWord);
+  e5.store(e4);
 }
 
 void LLVMProcessor::mathOpIM (const char * op) {
   unsigned a = SemPop();
   trace         ("\t! @TOS %s IMM WORD %04X -> @TOS\n", op, a);
-  fprintf (mf,"\n;\t! @TOS %s IMM WORD %04X -> @TOS\n", op, a);
-  fprintf (mf, "  store i16 %d, i16* %%RegHL, align 2\n"  , a);
-  fprintf (mf, "  tail call void @%sWord(i16* %%%ld, i16* %%RegHL)\n", op, PerNum-1);
+  currentFunction->RegHl.store(a);
+  lle e0 = currentFunction->wstack.stackptrw(CurrentWord);
+  lle e1 = e0.load();
+  lle e2 = currentFunction->RegHl.load();
+  lle e3 = e1.binaryOp (op, e2);
+  e0.store(e3);
 }
 
 void LLVMProcessor::mathOpWD (const char * op, long unsigned int n) {
   PredefAdr (n);
   trace         ("\t! WORD @W%04lX %s @TOS -> @TOS\n", n >> 4, op);
-  fprintf (mf,"\n;\t! WORD @W%04lX %s @TOS -> @TOS\n", n >> 4, op);
-  getElementPtr(n >> 4);
-  mStack.CurrentWordPtr(PerNum);
-  fprintf (mf, "  tail call void @%sWord(i16* %%%ld, i16* %%%ld)\n", op, PerNum-1, PerNum-3);
+  lle e0 = currentFunction->wstack.stackptrw(CurrentWord);
+  lle e1 = currentFunction->Variables.getelement(n >> 4);
+  lle e2 = e0.load();
+  lle e3 = e1.load();
+  lle e4 = e2.binaryOp (op, e3);
+  e0.store(e4);
 }
 void LLVMProcessor::c_addwp() {
   //-fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
@@ -700,19 +606,19 @@ void LLVMProcessor::c_addwp() {
 }
 
 void LLVMProcessor::c_addwd (unsigned long int n) {
-  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("add", n);
 }
 void LLVMProcessor::c_subwd (unsigned long int n) {
-  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("sub", n);
 }
 void LLVMProcessor::c_mulwd (unsigned long int n) {
-  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("mul", n);
 }
 void LLVMProcessor::c_divwd (unsigned long int n) {
-  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("udiv", n);
 }
 
@@ -754,44 +660,43 @@ void LLVMProcessor::c_divw() {
 }
 
 void LLVMProcessor::c_stimmd (unsigned long n) {
-  //fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   PredefAdr (n);
   unsigned a = SemPop();        // immediate op
   trace  ("\tWORD %04X -> @W%04lX\n", a, n >> 4);
   // + sitovy WORD vola jeste sluzbu site
-  getElementPtr(n >> 4);
-  fprintf(mf, "  tail call void @WordChangeWrap(i16* %%%ld, i16 %d)\n", PerNum-1, (short) a);
-  fprintf(mf, "  store i16 %d, i16* %%%ld, align 2\n", (short) a, PerNum-1);
-  
   lle e1 = currentFunction->Variables.getelement(n>>4);
+  e1.wordChange ((short) a);
   e1.store ((short) a);
 }
 /** *********************************************************************************************************/
 void LLVMProcessor::relOpWD (const char * op) {
   trace   ("\t@TOS %s @TOS-1 -> CARRY; TOS-=2\n", op);
-  mStack.PopWordPtr(PerNum);
-  fprintf (mf, "  %%%ld = load i16, i16* %%%ld, align 2\n", PerNum, PerNum-3);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = load i16, i16* %%%ld, align 2\n", PerNum, PerNum-2);
-  PerNum += 1;  /// zjistit, zda to neni obracene
-  fprintf (mf, "  %%%ld = icmp %s i16 %%%ld, %%%ld\n", PerNum, op, PerNum-1, PerNum-2);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = zext i1 %%%ld to i16\n", PerNum, PerNum-1);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
-  mStack.DecrementStack(1);
+  lle e0 = currentFunction->wstack.stackptrw(PopWord);
+  lle e1 = currentFunction->wstack.stackptrw(PopWord);
+  lle e2 = e0.load();
+  lle e3 = e1.load();
+  lle e4 = e3.binaryRel (op, e2);
+  currentFunction->carry.store(e4);
 }
 void LLVMProcessor::relOpWDIM (const char * op) {
   unsigned long a = SemPop();
   trace       ("\t@TOS %s IMM %04lX -> CARRY; --TOS\n", op, a);
-  fprintf (mf,";\t@TOS %s IMM %04lX -> CARRY; --TOS\n", op, a);
-  mStack.PopWord(PerNum);
-  fprintf (mf, "  %%%ld = icmp %s i16 %%%ld, %ld\n", PerNum, op, PerNum-1, a);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = zext i1 %%%ld to i16\n", PerNum, PerNum-1);
-  fprintf (mf, "  store i16 %%%ld, i16* %%carry, align 2\n", PerNum);
-  PerNum += 1;
+  lle e0 = currentFunction->wstack.stackptrw(PopWord);
+  lle e2 = e0.load();
+  lle e3 = e2.binaryRel (op, a);
+  currentFunction->carry.store(e3);
 }
+void LLVMProcessor::relOpRE(const char* op) {
+  trace   ("\t@TOS %s @TOS-1 -> CARRY; TOS-=2\n", op);
+  lle e0 = currentFunction->wstack.stackptrr(PopReal);
+  lle e1 = currentFunction->wstack.stackptrr(PopReal);
+  lle e2 = e0.load();
+  lle e3 = e1.load();
+  lle e4 = e3.binaryRelRe (op, e2);
+  currentFunction->carry.store(e4);
+}
+
 void LLVMProcessor::c_ltw() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   relOpWD ("ult");
@@ -816,7 +721,47 @@ void LLVMProcessor::c_new() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   relOpWD ("ne");
 }
+void LLVMProcessor::c_lti() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpWD ("slt");
+}
+void LLVMProcessor::c_lei() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpWD ("sle");
+}
+void LLVMProcessor::c_gti() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpWD ("sgt");
+}
+void LLVMProcessor::c_gei() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpWD ("sge");
+}
 
+void LLVMProcessor::c_ltr() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("ult");
+}
+void LLVMProcessor::c_ler() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("ule");
+}
+void LLVMProcessor::c_gtr() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("ugt");
+}
+void LLVMProcessor::c_ger() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("uge");
+}
+void LLVMProcessor::c_eqr() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("eq");
+}
+void LLVMProcessor::c_ner() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  relOpRE("ne");
+}
 
 void LLVMProcessor::c_muliim() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
@@ -854,14 +799,105 @@ void LLVMProcessor::c_eqwim() {
 }
 
 /** *************************************************************************/
+void LLVMProcessor::c_andwim() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpIM("and");
+}
+void LLVMProcessor::c_xorwim() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpIM("xor");
+}
+void LLVMProcessor::c_orwim() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpIM("or");
+}
+void LLVMProcessor::c_andwd (unsigned long int n) {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWD ("and", n);
+}
+void LLVMProcessor::c_orwd (unsigned long int n) {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWD ("or", n);
+}
+void LLVMProcessor::c_xorwd (unsigned long int n) {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWD ("xor", n);
+}
+void LLVMProcessor::c_andw() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWDS("and");
+}
+void LLVMProcessor::c_orw() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWDS("or");
+}
+void LLVMProcessor::c_xorw() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  mathOpWDS("xor");
+}
+/** *******************************************************************************/
+const LLVMProcessor::conv_s LLVMProcessor::RetypeConversions[] = {
+  {"float","i16",4,2},
+  {"i16","float",2,4}
+};
+
+void LLVMProcessor::Convert (const LLVMProcessor::conv_s * ct, const char * util) {
+  lle efp, etp;
+  if (ct->align_from == 4) {
+    efp = currentFunction->wstack.stackptrr(PopReal);
+    etp = currentFunction->wstack.stackptrw(PushWord);
+  }
+  else{
+    efp = currentFunction->wstack.stackptrw(PopWord);
+    etp = currentFunction->wstack.stackptrr(PushReal);
+  }
+  lle ef = efp.load();
+  lle ed (ef);
+  ef.body << "  " << ed.name << " = " << util << " " << ct->from << " " << ef.name << " to " << ct->to << "\n";
+  *currentFunction << ef.body;
+  ed.type = ct->to;
+  etp.store (ed);  
+}
+
+void LLVMProcessor::c_rtoi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace        ("\tREAL -> INT  @TOS\n");
+  Convert (RetypeConversions + 0,"fptosi");
+}
+void LLVMProcessor::c_rtow() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace        ("\tREAL -> WORD @TOS\n");
+  Convert (RetypeConversions + 0,"fptoui");
+}
+void LLVMProcessor::c_itor() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace       ("\tINT  -> REAL @TOS\n");
+  Convert (RetypeConversions + 1,"sitofp");
+}
+void LLVMProcessor::c_wtor() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace       ("\tWORD -> REAL @TOS\n");
+  Convert (RetypeConversions + 1,"uitofp");
+}
+
+/** *************************************************************************/
+
 void LLVMProcessor::c_caseof() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  unsigned n = SemPop();
+  //-fprintf (stdout, "Funkce:%s, %d\n", __FUNCTION__, n);
+  trace       ("\t#CASEOF (%d) -> L%04lX\n", n, LblNum+1);
+  
+  lle e1 = currentFunction->wstack.stackptrw(CurrentWord);
+  lle e2 = e1.load();
+  lle e3 = e2.binaryOp ("icmp ne", n);
+  LblNum += 1;
+  e3.condBranch (LblNum);
+  SemPush (LblNum);
 }
 void LLVMProcessor::c_endcase() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_retb() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace       ("\t#ENDCASE; TOS--\n");
+  lle e1 = currentFunction->wstack.stackptrw(PopWord);  
 }
 
 /** *************************************************************************/
@@ -871,28 +907,23 @@ void LLVMProcessor::c_proced (LPOLOZKA * p, int pos) {
   ProcNum += 1;
   p->atr   = ProcNum;
   tempFile = mf;
-  mf = procFile;
-  mStack.clear();
-  
-  fprintf(mf, "\n; Function Attrs: nounwind inline\n");
-  fprintf(mf, "define internal void @%s(i16* %%param, i16 %%dps) #0 {\n", p->iden);
-  mStack.Define (8, iFmt);
-  fprintf(mf, "  %%RegHL = alloca i16, align 2\n");
-  loadRamPtr();
+  funciner = new llfnci (p->iden);
+  funciner->declare();
+  currentFunction = funciner;
 }
 void LLVMProcessor::c_preturn (LPOLOZKA * p) {
   //-fprintf (stdout, "Funkce:%s -> \"%s\"\n", __FUNCTION__, p->iden);
-  fprintf (mf,"\nret void\n}\n");
-  
-  mf = tempFile;
-  PerNum = 1;
-  mStack.clear();
+  trace       ("\tRETURN INTERNAL %s\n", p->iden);
+  LblNum = 0;
+  funciner->close(bodyFunctions);
+  currentFunction = mainfunc;
+  delete funciner;
 }
 void LLVMProcessor::c_pcall (char * u) {
   //-fprintf (stdout, "Funkce:%s -> [%s]\n", __FUNCTION__, u);
-  
-  fprintf (mf, "  tail call void @%s(i16* %%stack, i16 %d)\n", u, mStack.depth());
-  mStack.clear();
+  trace       ("\tCALL INTERNAL %s\n", u);
+  currentFunction->calli(u);
+  currentFunction->wstack.clear();
 }
 void LLVMProcessor::c_spar (long unsigned int a) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
@@ -900,9 +931,7 @@ void LLVMProcessor::c_spar (long unsigned int a) {
   unsigned long parno = (a>>4)-2;
   fromField = true;
   trace       ("\tOPERAND REAL %ld z PARAM -> PTR\n", parno);
-  fprintf (mf,";\tOPERAND REAL %ld z PARAM -> PTR\n", parno);
-  fprintf (mf, "  %%%ld = getelementptr inbounds i16, i16* %%param, i16 %ld\n", PerNum, parno);
-  PerNum += 1;
+  lastw = currentFunction->param.getelement(parno);  
 }
 
 void LLVMProcessor::c_spa (unsigned long int a) {
@@ -910,28 +939,91 @@ void LLVMProcessor::c_spa (unsigned long int a) {
   unsigned long parno = (a>>4)-1;
   //fromField = true;
   trace       ("\tOPERAND WORD %ld z PARAM -> PTR\n", parno);
-  fprintf (mf,";\tOPERAND WORD %ld z PARAM -> PTR\n", parno);
-  fprintf (mf, "  %%%ld = getelementptr inbounds i16, i16* %%param, i16 %ld\n", PerNum, parno);
-  PerNum += 1;
+  lastw = currentFunction->param.getelement(parno);  
 }
 void LLVMProcessor::c_ldaa (unsigned long int a) {
   //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
   unsigned long parno = (a>>4)-1;
   fromField = true;
   trace       ("\tOPERAND @WORD %ld z PARAM -> PTR\n", parno);
-  fprintf (mf,";\tOPERAND @WORD %ld z PARAM -> PTR\n", parno);
-  fprintf (mf,"  %%%ld = getelementptr inbounds i16, i16* %%param, i16 %ld\n", PerNum, parno);
-  PerNum += 1;
-  fprintf (mf,"  %%%ld = load i16, i16* %%%ld, align 2\n", PerNum, PerNum-1);
-  PerNum += 1;
-  fprintf (mf,"  %%%ld = ashr i16 %%%ld, 1\n", PerNum, PerNum-1);        // index ve WORD
-  PerNum += 1;
-  fprintf (mf,
-    "  %%%ld = getelementptr inbounds %s, %s* %s, %s 0, i32 0, i16 %%%ld\n",
-    PerNum, ramdef, ramdef, vardef, iFmt, PerNum-1);
-  PerNum += 1;
+  lle e0 = currentFunction->param.getelement(parno);
+  lle e1 = e0.load();
+  lle e2 = e1.binaryOp("ashr", 1);
+  lastw  = currentFunction->Variables.getelement(e2);
 }
 
+/** *************************************************************************/
+static unsigned beginBadr;
+
+void LLVMProcessor::c_ldbaim (unsigned long int a) {
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
+  trace        ("\tNacteni adresy bitu %04lX [%03X.%X]; 0 do TOS; TOS++\n", a, a>>4, a&0xF);
+  PredefAdr (a);
+  beginBadr = a;
+  
+  currentFunction->wstack.pusha(0);
+}
+
+void LLVMProcessor::c_setbi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  unsigned n = beginBadr;
+  trace  ("\tBIT [%04lX]+ofset SET INDIRECT\n", n);
+  lle e0 = lindex.binaryOp("add", n);
+  
+  currentFunction->callVoid ("WsetBit", e0, 1);
+}
+void LLVMProcessor::c_resbi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  unsigned n = beginBadr;
+  trace  ("\tBIT [%04lX]+ofset RESET INDIRECT\n", n);
+  lle e0 = lindex.binaryOp("add", n);
+  
+  currentFunction->callVoid ("WsetBit", e0, 0);
+}
+
+void LLVMProcessor::c_invbi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  unsigned n = beginBadr;
+  trace  ("\tBIT [%04lX]+ofset INV INDIRECT\n", n);
+  lle e0 = lindex.binaryOp("add", n);
+  
+  currentFunction->callVoid ("WcplBit", e0);
+}
+void LLVMProcessor::c_ldbi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  unsigned n = beginBadr;
+  trace  ("\tBIT [%04lX]+ofset -> CARRY\n", n);
+  lle e0 = lindex.binaryOp("add", n);
+  
+  lle e1 = currentFunction->callGetBit (e0);
+  currentFunction->carry.store(e1);
+}
+void LLVMProcessor::c_chsi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace       ("\tWORD @TOS -> -@TOS\n");
+  lle e0 = currentFunction->wstack.stackptrw(CurrentWord);
+  lle e1 = e0.load();
+  lle e2 (e1);
+  e2.body << "  " << e2.name << " = sub i16 0, " << e1.name << "\n";
+  * currentFunction << e2.body;
+  e0.store(e2);
+}
+void LLVMProcessor::c_absi() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  trace       ("\tWORD @TOS -> abs @TOS\n");
+  lle e0 = currentFunction->wstack.stackptrw(CurrentWord);
+  lle e1 = e0.load();
+  lle e2 (e1);
+  e2.body << "  " << e2.name << " = tail call i16 @absi(i16 " << e1.name << ")\n";
+  * currentFunction << e2.body;
+  e0.store(e2);
+}
+
+void LLVMProcessor::c_disps (char * u) {
+  //-fprintf (stdout, "Funkce:%s : \"%s\"\n", __FUNCTION__, u);
+  texts.display(u);
+}
+/** *********************************************************************************************************/
 void LLVMProcessor::c_func (LPOLOZKA * p, int pos) {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
@@ -941,9 +1033,6 @@ void LLVMProcessor::c_freturn (LPOLOZKA * p) {
 void LLVMProcessor::c_fcall (char * u) {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
-void LLVMProcessor::c_skpb() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
 void LLVMProcessor::c_allot() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
@@ -951,14 +1040,16 @@ int  LLVMProcessor::c_retval() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   return 0;
 }
-void LLVMProcessor::c_procerror() {
+void LLVMProcessor::c_skpb() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
-/** *************************************************************************/
-void LLVMProcessor::c_ldbaim (unsigned long int a) {
-  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
+/** *********************************************************************************************************/
+void LLVMProcessor::c_retb() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
-
+void LLVMProcessor::c_stbi() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+}
 void LLVMProcessor::c_ldbaa (unsigned long int a) {
   fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
 }
@@ -966,46 +1057,7 @@ void LLVMProcessor::c_spba (unsigned long int a) {
   fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, a);
 }
 
-void LLVMProcessor::c_setbi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_resbi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-
-void LLVMProcessor::c_invbi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_ldbi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-
-void LLVMProcessor::c_stbi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-/** *********************************************************************************************************/
-
-void LLVMProcessor::c_chsi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_absi() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-
 void LLVMProcessor::c_swap() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-
-void LLVMProcessor::c_lti() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_lei() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_gti() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_gei() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
 
@@ -1022,56 +1074,7 @@ void LLVMProcessor::c_prntb() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
 
-void LLVMProcessor::c_ltr() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_ler() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_gtr() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_ger() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_eqr() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_ner() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_andwim() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_andwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_andw() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_orwim() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_orwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_orw() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_xorwim() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_xorwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_xorw() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-
 /** *******************************************************************************/
-void LLVMProcessor::c_disps (char * u) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
 void LLVMProcessor::c_prnts (char * u) {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
@@ -1085,47 +1088,7 @@ void LLVMProcessor::c_memread() {
 void LLVMProcessor::c_unknown (char * u) {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
-/** *******************************************************************************/
-const LLVMProcessor::conv_s LLVMProcessor::RetypeConversions[] = {
-  {"float","i16",4,2},
-  {"i16","float",2,4}
-};
-
-void LLVMProcessor::Convert (const LLVMProcessor::conv_s * ct, const char * util) {
-  if (ct->align_from == 4) mStack.CurrentRealPtr (PerNum);
-  else                     mStack.CurrentWordPtr (PerNum);
-  fprintf (mf, "  %%%ld = load %s, %s* %%%ld, align %d\n",  PerNum, ct->from, ct->from, PerNum-1, ct->align_from);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = %s %s %%%ld to %s\n", PerNum, util, ct->from, PerNum-1, ct->to);
-  PerNum += 1;
-  fprintf (mf, "  %%%ld = bitcast i16* %%%ld to %s*\n", PerNum, PerNum-4, ct->to);
-  PerNum += 1;
-  fprintf (mf, "  store %s %%%ld, %s* %%%ld, align %d\n\n", ct->to, PerNum-2, ct->to, PerNum-1, ct->align_to);
+void LLVMProcessor::c_procerror() {
+  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }
-
-void LLVMProcessor::c_rtoi() {
-  //fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-  trace        ("\tREAL -> INT  @TOS\n");
-  fprintf (mf, ";\tREAL -> INT  @TOS\n");
-  Convert (RetypeConversions + 0,"fptosi");
-}
-void LLVMProcessor::c_rtow() {
-  //fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-  trace        ("\tREAL -> WORD @TOS\n");
-  fprintf (mf, ";\tREAL -> WORD @TOS\n");
-  Convert (RetypeConversions + 0,"fptoui");
-}
-void LLVMProcessor::c_itor() {
-  //fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-  trace       ("\tINT  -> REAL @TOS\n");
-  fprintf (mf,";\tINT  -> REAL @TOS\n");
-  Convert (RetypeConversions + 1,"sitofp");
-}
-void LLVMProcessor::c_wtor() {
-  //fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-  trace       ("\tWORD -> REAL @TOS\n");
-  fprintf (mf,";\tWORD -> REAL @TOS\n");
-  Convert (RetypeConversions + 1,"uitofp");
-}
-
 

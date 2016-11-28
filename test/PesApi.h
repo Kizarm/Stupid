@@ -15,4 +15,5 @@ extern void ExitLibPes (void);
 extern PesApi_t * GetPesApiPtr (void);
 // callbacks :
 extern void ApiNetDriver (WORD * ptr, WORD newdata);
+extern void ApiDispText  (char * str);
 #endif /* __PESAPI_H__ */

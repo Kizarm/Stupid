@@ -22,10 +22,9 @@ OBJECTS+= Optimizer.o
 OBJECTS+= Predef.o
 OBJECTS+= Prikaz.o
 OBJECTS+= Procdef.o
-#OBJECTS+= Procesor.o
 OBJECTS+= 8051Processor.o
 OBJECTS+= LLVMProcessor.o
-OBJECTS+= LLVMStack.o
+#OBJECTS+= LLVMStack.o
 OBJECTS+= llvmcomponent.o
 
 OBJECTS+= SynAn.o

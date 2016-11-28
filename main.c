@@ -38,7 +38,7 @@ void Logging (const char *buff) {
 
 int main (int argc,char *argv[]) {
   int result;
-  //if (argc < 2) return -1;
+  if (argc < 2) return -1;
   
   LogFce  = Logging;
   CompilerFlags cf;
@@ -52,7 +52,7 @@ int main (int argc,char *argv[]) {
   else                            cf.F.TGT = LLVMTypesMax;
   //-printf ("CF=0x%08X\n", cf.Common);
   
-  cf.F.TGT = MachineTypeLinux64;
+  //cf.F.TGT = MachineTypeLinux64;
   if (argc < 3) {
     result  = Simple("Test.stp", cf.Common);
   } else {
