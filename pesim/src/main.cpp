@@ -5,9 +5,12 @@
 
 #include "../../simple/llvm/PesApi.h"
 
-int main(int argc, char** argv) {
-  const char * library = "/home/mrazik/lib/libpes.so";
-  if (LoadLibPes(library)) {
+int main (int argc, char** argv) {
+  if (argc < 2) {
+    printf ("Usage :\n\t%s drivername.so\n", argv[0]);
+  }
+  
+  if (LoadLibPes(argv[1])) {
     return -1;
   }
   

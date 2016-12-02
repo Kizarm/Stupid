@@ -25,7 +25,7 @@ llcapi.o: llcapi.cpp
 $(SLIB): $(SOBJS)
 	$(CXX) -o $(SLIB) -shared -fPIC $(SOBJS) $(CLANGLIBS) $(LLVMLDFLAGS)
 	
-$(EXES): $(OBJECTS)
+$(EXES): $(OBJECTS) $(SLIB)
 	$(CXX) -o $(EXES) $(OBJECTS) -L. -lllcapi
 
 clean:

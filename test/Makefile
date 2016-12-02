@@ -1,10 +1,11 @@
-#PREFIX = arm-none-eabi-
-PREFIX =
+PREFIX = arm-none-eabi-
+#PREFIX =
 ISF ?= Test
 
 PR = test
 CC = $(PREFIX)gcc
 AS = $(PREFIX)as
+LD = $(PREFIX)ld
 SIZE    = $(PREFIX)size
 OBJCOPY = $(PREFIX)objcopy
 OBJDUMP = $(PREFIX)objdump
@@ -29,12 +30,10 @@ OBJECTS = main.o PesApi.o
 $(PR): $(OBJECTS)
 	$(CC) $(MFLAGS) $(OBJECTS) $(LFLAGS)
 
-$(PLIB): simpledef.o test.o
-	$(CC) -g -shared -fPIC simpledef.o test.o -o $(PLIB) -lm
-simpledef.o: simpledef.c
-	$(CC) -g -c -Os -fPIC  $< -o $@
+$(PLIB): test.o
+	$(LD) -shared -fPIC test.o -o $(PLIB)
 $(ISF).mac.ll: $(ISF).stp ../Simple
-	../Simple i $(ISF).stp
+	../Simple $(ISF).stp i
 test.s: test.ll
 	llc-3.8 -relocation-model=pic -O3 test.ll -o test.s
 else
@@ -43,25 +42,23 @@ all: $(TGTS)
 LLCFP = -mcpu=cortex-m4 -mattr=+fp-only-sp,+d16
 
 LFLAGS += -T script.ld
-LFLAGS += -nostartfiles
-LFLAGS += -Wl,--gc-sections,-Map=pes.map -lm
+#LFLAGS += -nostartfiles
+LFLAGS += --gc-sections -Map=pes.map
 
 CFLAGS += -mthumb -mcpu=cortex-m4
 #CFLAGS += -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 EFLAGS += -ffunction-sections -fdata-sections
 EFLAGS += -Wa,-adhlns=$(@:%.o=%.lst)
 
-$(PLIB): simpledef.o test.o
-	$(CC) $(CFLAGS) simpledef.o test.o -o $(PLIB) $(LFLAGS)
+$(PLIB): test.o
+	$(LD) $(LFLAGS) test.o -o $(PLIB)
 	$(SIZE) $(PLIB)
 	$(OBJCOPY) --strip-unneeded -O ihex  $(PLIB) pes.hex
 	$(OBJDUMP) -h -S $(PLIB) > pes.lst
-#simpledef.o: simpledef.c
-#	$(CC) -g -c -Os -fPIC  $< -o $@
 $(ISF).mac.ll: $(ISF).stp ../Simple
-	../Simple f $(ISF).stp
+	../Simple $(ISF).stp f
 test.s: test.ll
-	llc-3.8 -O3 $(LLCFP) test.ll -o test.s
+	llc-3.8 -function-sections -O3 $(LLCFP) test.ll -o test.s
 endif
 
 test.ll: $(ISF).mac.ll
@@ -73,4 +70,4 @@ test.ll: $(ISF).mac.ll
 	$(CC) -c $(CFLAGS) $(EFLAGS) $< -o $@
 
 clean:
-	rm -f *.s *.o *.so *~ *.ll *.lst *.map test
+	rm -f *.s *.o *.so *~ *.ll *.lst *.map *.hex *.err test

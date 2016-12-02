@@ -338,7 +338,7 @@ llfnc::llfnc(const char* n) :
   
 }
 void llfnc::declare(void) {
-  lls s ("@RamBasePtr = external global %union.RamDef_u*\n");
+  lls s /*("@RamBasePtr = external global %union.RamDef_u*\n")*/;
   s << "\n; Function Attrs: nounwind\ndefine void @";
   s << name;
   s << "() #0 {\n";

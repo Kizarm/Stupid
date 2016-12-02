@@ -42,7 +42,7 @@ extern char   SupF[80];
 extern int    ListF,MCodeF,SrcF,VerbF;
 extern FILE  * of;
 
-static  const char * ramdef = "%union.RamDef_u";
+//static  const char * ramdef = "%union.RamDef_u";
 
 struct LLVMTexts {
   const char * prefix;
@@ -80,24 +80,6 @@ static const LLVMTexts pst[LLVMTypesMax] = {
     "\"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n"
     "attributes #1 = { argmemonly nounwind }\n"
   }
-};
-static const LLVMTexts CommonTexts = {
-  "@RamBasePtr = external global %union.RamDef_u*\n"
-  "\n; Function Attrs: nounwind\n"
-  "define void @Simple() #0 {\n"
-  "  %carry = alloca i16, align 2\n"    // pro lepsi optimalizaci bude lepsi mit carry jako lokalni
-  "  %RegHL = alloca i16, align 2\n"    // a RegHL
-  "  %RegRE = alloca float, align 4\n"  // a RegRE
-  ,
-  "declare zeroext i16 @WgetBit(i32) #1\n"
-  "declare void @WsetBit(i32, i16 zeroext) #1\n"
-  "declare void @WcplBit(i32) #1\n"
-  "declare zeroext i16 @TestPole(i16 zeroext,i16 zeroext) #1\n"
-  "declare float @fabsf(float %Val)\n"
-  "declare i16 @absi(i16 %Val)\n"
-  "declare float @truncf(float %Val)\n"
-  "declare void @Disps(i8* %Val)\n"
-  "declare void @WordChangeWrap(i16* %ptr, i16 %data)\n"
 };
 
 LLVMProcessor::LLVMProcessor (LLVMTypeMachine t) : BaseProcessor(),
@@ -173,7 +155,7 @@ void LLVMProcessor::c_endif() {
   currentFunction->branch(tmp);
   currentFunction->label (tmp);
 }
-
+extern const char * pesll;
 void LLVMProcessor::c_procinit() {
   //-fprintf (stdout, "\nFunkce:%s\n", __FUNCTION__);
 
@@ -198,8 +180,8 @@ void LLVMProcessor::c_procinit() {
   char buffer [bufmax];
   int count = 0;
   count += snprintf (buffer + count, bufmax - count, "%s\n", pst[m_Type].prefix);
-  count += snprintf (buffer + count, bufmax - count, "%s = type { [1024 x i16] }\n\n", ramdef);
   *currentFunction << buffer;
+  *currentFunction << pesll;
   
   currentFunction->declare();
   
@@ -217,7 +199,7 @@ void LLVMProcessor::c_procend() {
     }
   }
   texts.close(*currentFunction);
-  *currentFunction << CommonTexts.suffix << "\n" << pst[m_Type].suffix << "\n";
+  *currentFunction << pst[m_Type].suffix;
   currentFunction->write (mf);
   fclose (mf);
   

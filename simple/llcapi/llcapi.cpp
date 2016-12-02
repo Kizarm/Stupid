@@ -48,6 +48,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <memory>
 #include "llcapi.h"
+
 using namespace llvm;
 
 // main - Entry point for the llc compiler.
@@ -62,8 +63,24 @@ static unsigned TimeCompilations = 1;
 
 static int compileModule(const char *, LLVMContext &);
 
+static const char * x86_64_cmd   [] = {"test", "-relocation-model=pic", 0};
+static const char * arm_cm3_cmd  [] = {"test", "-function-sections", 0};
+static const char * arm_cm4f_cmd [] = {"test", "-function-sections", "-mcpu=cortex-m4" , "-mattr=+fp-only-sp,+d16", 0};
+
+static const char ** linecmd [LLVMTypesMax] = {
+  x86_64_cmd, arm_cm3_cmd, arm_cm4f_cmd
+};
+static int cmdlen (LLVMTypeMachine m) {
+  int i=0;
+  for (;;) {
+    if (linecmd[m][i]) {
+      i += 1;
+    } else break;
+  }
+  return i;
+}
 /// rozhrani
-int CompileLLtoASFile (const char * infile, const char* outfile, bool usefloat) {
+int CompileLLtoASFile (const char * infile, const char* outfile, LLVMTypeMachine f) {
   InputFilename  = infile;
   OutputFilename = outfile;
 
@@ -90,13 +107,11 @@ int CompileLLtoASFile (const char * infile, const char* outfile, bool usefloat) 
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
-  /** Pro Cortex M4F nutno použít přídavné parametry v cmdline */
-  const char * argv [] = {
-    "test", "-mcpu=cortex-m4" , "-mattr=+fp-only-sp,+d16"
-  };
-  const int argc = sizeof (argv) / sizeof (char*);
-  if (usefloat)
-    cl::ParseCommandLineOptions(argc, argv, "llvm test compiler\n");
+  
+  const char ** argv = linecmd [f];
+  const int     argc = cmdlen(f);
+  
+  cl::ParseCommandLineOptions(argc, argv, "llvm test compiler\n");
 
   // Compile the module TimeCompilations times to give better compile time
   // metrics.

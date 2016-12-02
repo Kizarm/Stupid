@@ -30,6 +30,7 @@
 #include "inc/CfgTypes.h"
 
 #include "../lib/AsmApi.h"
+#include "./llcapi/llcapi.h"
 
 #define   ERRFILE "Errlist.txt"
 
@@ -61,6 +62,42 @@ extern char t[80];
 static POLOZKA * LastSystem = NULL;
 
 char  LastOpenedFile[80];
+
+static int Exec (const char * cmd) {
+  int res = system(cmd);
+  printf ("Command : \"%s\"  ", cmd);
+  if (res) printf ("failed\n");
+  else     printf ("OK\n");
+  return res;
+}
+static void Linking (LLVMTypeMachine m) {
+  const int max = 1024;
+  char soname[max], oname[max], hname[max];
+//snprintf (soname, max, "libpes.so");
+  snprintf (soname, max, "%s.so", MacF);
+  snprintf ( oname, max, "%s.o",  MacF);
+  snprintf ( hname, max, "%s.hex",MacF);
+  const char * prefix = "arm-none-eabi-";
+  const char * procty [2] = {"cortex-m3","cortex-m4"}; 
+  char cmd [max];
+  if (m == MachineTypeLinux64) {
+    snprintf (cmd, max, "as %s -o %s", MacF, oname);
+    if (Exec(cmd)) return;
+    snprintf (cmd, max, "ld -shared -fPIC %s -o %s", oname, soname);
+    if (Exec(cmd)) return;
+  } else {
+    snprintf (cmd, max, "%sas %s -o %s", prefix, MacF, oname);
+    if (Exec(cmd)) return;
+    snprintf (cmd, max, "%sgcc -mthumb -mcpu=%s -Wl,--gc-sections,-Map=pes.map -T script.ld %s -o %s",
+              prefix, procty[m-1], oname, soname);
+    if (Exec(cmd)) return;
+    snprintf (cmd, max, "%ssize %s", prefix, soname);
+    if (Exec(cmd)) return;
+    snprintf (cmd, max, "%sobjcopy --strip-unneeded -O ihex %s %s", prefix, soname, hname);
+    if (Exec(cmd)) return;
+  }
+  remove (oname);
+}
 
 /** Workaround pro překrývající se stringy v strcpy()
  * */
@@ -200,18 +237,18 @@ static void InitFlags (const unsigned flags) {
 int Simple (const char * name, const unsigned flags) {
   char * arg = strdup (name);
   argm = arg;
-  
+
   CompilerFlags cf;
   cf.Common = flags;
   switch (cf.F.TGT) {
-    case MachineTypeLinux64:
-    case MachineTypeCortexM3:
-    case MachineTypeCortexM4F:
-      BaseProcessorPtr = new  LLVMProcessor(cf.F.TGT);
-      break;
-    default:
-        BaseProcessorPtr = new I8051Processor();
-      break;
+  case MachineTypeLinux64:
+  case MachineTypeCortexM3:
+  case MachineTypeCortexM4F:
+    BaseProcessorPtr = new  LLVMProcessor (cf.F.TGT);
+    break;
+  default:
+    BaseProcessorPtr = new I8051Processor();
+    break;
   }
 
   NetAdr = 31;
@@ -261,15 +298,21 @@ int Simple (const char * name, const unsigned flags) {
     Program();
     if (cf.F.TGT == LLVMTypesMax) {
 
-    GenListFile();
+      GenListFile();
 
-    ///OptF = 1;
-    if (OptF) OptimizeMac();
+      ///OptF = 1;
+      if (OptF) OptimizeMac();
 
-    if (!Assembler())
-      return -1;
-    MakeDnl();
+      if (!Assembler())
+        return -1;
+      MakeDnl();
 
+    } else {
+      char copy[1024];
+      strncpy (copy, MacF, 1024);
+      strcat  (copy, ".ll");
+      CompileLLtoASFile (copy, MacF, cf.F.TGT);
+      Linking (cf.F.TGT);
     }
     fclose (ef);
   } catch (CError ex) {
@@ -285,6 +328,6 @@ int Simple (const char * name, const unsigned flags) {
   AddInfo ("Preklad uspesne dokoncen\n");
 
   delete BaseProcessorPtr;
-  printf("\n");
+  printf ("\n");
   return 0;
 }

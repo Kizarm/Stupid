@@ -49,8 +49,9 @@ function init(a,b:real):real;
 return
 }
 
-if reset then D32=0x5555; reset' else
+if reset then D32=0x5555; reset'; fa=-12.34; else
 
+//fb = trunc(fa);
 D32 = DX0;
 DY0 = D32;
 O0  = I0;

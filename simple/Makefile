@@ -7,7 +7,9 @@ CFLAGS  = -Os
 CFLAGS += -Wall
 #CFLAGS += -Wno-write-strings
 MFLAGS = -o $(PR)
-LFLAGS = -L../lib -lasmapi
+LFLAGS = -L../lib -L./llcapi -lasmapi -lllcapi
+
+VPATH += ./llib
 
 all: $(PR)
 
@@ -43,6 +45,8 @@ OBJECTS+= 60znak.o
 
 OBJECTS+= main.o
 
+OBJECTS+= peslib.o
+
 $(PR): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(OBJECTS) $(LFLAGS)
 clean:
@@ -51,6 +55,8 @@ clean:
 	$(CC) -c $(CFLAGS) $<
 %.o: %.cpp
 	$(CXX) -c $(CFLAGS) $<
+%.o: %.s
+	as $< -o $@
 
 #$(PR): $(OBJECTS)
 #	ar rcs $(PR) $(OBJECTS)

@@ -17,7 +17,7 @@ int LoadLibPes (const char * name) {
   pesHandle = dlopen (name, RTLD_LAZY);
   if (!pesHandle) {
     fprintf (stderr,"Chyba: nejde otevrit knihovna \"%s\" - tip:\n"
-    "export LD_LIBRARY_PATH=`pwd`\n", name);
+    "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`\n", name);
     return -1;
   }
   dlerror();
