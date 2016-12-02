@@ -129,6 +129,7 @@ class llf : public lle {
   public:
     llf():lle(){};
     llf (ElementType type, const char * name, const int len);
+    lle  getelement (int no);
     ~llf(){};
 };
 enum StackOperationW {
@@ -153,7 +154,8 @@ class lli : public lle {
     lle stackptrw (StackOperationW);
     lle stackptrr (StackOperationR);
     void test  (void);
-    void clear (void);
+    void clear (int n=0);
+    //void shift (int n=2);
     ~lli(){};
   private:
     int sp;
@@ -192,6 +194,7 @@ class llfnc {
       return result;
     }
     void calli (const char * name);
+    void callf (const char * name, lle & param);
     virtual ~llfnc ();
     //void stack(StackOperationW PopWord);
   protected:
@@ -211,6 +214,7 @@ class llfnc {
     lli                      param;
     lls                      name;
     std::vector<lls>         body;
+    bool                     intfunc;
   private:
     int                      number;
 };

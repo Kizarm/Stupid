@@ -1,5 +1,6 @@
-PREFIX = arm-none-eabi-
-#PREFIX =
+#PREFIX = arm-none-eabi-
+PREFIX =
+ISF ?= Test
 
 PR = test
 CC = $(PREFIX)gcc
@@ -13,6 +14,8 @@ MFLAGS = -o $(PR)
 LFLAGS =
 PLIB = libpes.so
 TGTS = $(PLIB)
+
+VPATH += ../simple/llvm
 
 ifeq ($(PREFIX),)
 TGTS   += $(PR)
@@ -30,8 +33,8 @@ $(PLIB): simpledef.o test.o
 	$(CC) -g -shared -fPIC simpledef.o test.o -o $(PLIB) -lm
 simpledef.o: simpledef.c
 	$(CC) -g -c -Os -fPIC  $< -o $@
-Test.mac.ll: Test.stp ../Simple
-	../Simple i
+$(ISF).mac.ll: $(ISF).stp ../Simple
+	../Simple i $(ISF).stp
 test.s: test.ll
 	llc-3.8 -relocation-model=pic -O3 test.ll -o test.s
 else
@@ -55,14 +58,14 @@ $(PLIB): simpledef.o test.o
 	$(OBJDUMP) -h -S $(PLIB) > pes.lst
 #simpledef.o: simpledef.c
 #	$(CC) -g -c -Os -fPIC  $< -o $@
-Test.mac.ll: Test.stp ../Simple
-	../Simple f
+$(ISF).mac.ll: $(ISF).stp ../Simple
+	../Simple f $(ISF).stp
 test.s: test.ll
 	llc-3.8 -O3 $(LLCFP) test.ll -o test.s
 endif
 
-test.ll: Test.mac.ll
-	opt-3.8 -S -O3 Test.mac.ll -o test.ll
+test.ll: $(ISF).mac.ll
+	opt-3.8 -S -O3 $(ISF).mac.ll -o test.ll
 
 %.o: %.s
 	$(AS)  $< -o $@

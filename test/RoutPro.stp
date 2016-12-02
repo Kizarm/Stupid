@@ -8,7 +8,7 @@
 #Configuration "ROUTPRO"
 
 #pragma $LJ
-#databegin 4096
+#databegin 1024
 //NetAddr(0) 
 
 var

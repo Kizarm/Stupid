@@ -146,7 +146,7 @@ void lle::condBranch(unsigned int lab) {
   * currentFunction << * this;
 }
 void lle::wordChange(unsigned int adr) {
-  body << "  tail call void @WordChangeWrap(i16* " << name << ", i16 " << adr << ")\n";
+  body << "  tail call void @WordChangeWrap(i16* " << name << ", i16 " << adr    << ")\n";
   * currentFunction << * this;
 }
 void lle::wordChange(const lle& w) {
@@ -229,6 +229,14 @@ lli::lli(const lle& old, const char* n) {
   addStar();
   sp = 0;
 }
+/*
+void lli::shift(int n) {
+  unsigned w = wpSize << 3;
+  body << "  %wparm = getelementptr inbounds " << type << ", ";
+  body << type << "* %wstore, i" << w << " 0, i" << w << " " << n << "\n";
+  *currentFunction << body;
+}
+*/
 lle lli::stackptrw(StackOperationW o){
   lle e0;
   switch (o) {
@@ -257,8 +265,8 @@ void lli::test(void) {
   if (sp)
     printf ("!!! SP=%d\n", sp);
 }
-void lli::clear(void){
-  sp = 0;
+void lli::clear(int n){
+  sp = n;
 }
 
 llf::llf(ElementType t, const char* n, const int l): lle (t, 0, 0) {
@@ -268,6 +276,16 @@ llf::llf(ElementType t, const char* n, const int l): lle (t, 0, 0) {
   setFtype (l);
   body << "  " << name << " = alloca " << type << align << "\n";
 }
+lle llf::getelement(int no) {
+  lle tmp  (* this);
+  unsigned w = wpSize << 3;
+  body << "  " << tmp.name << " = getelementptr inbounds " << tmp.type << ", ";
+  body << type << "* " << name << ", i" << w << " 0, i" << w << " " <<  no << "\n";
+  tmp.type = "i16*";  // trochu nelogicke, ale pouziva se jen pro stack
+  * currentFunction << * this;
+  return tmp;
+}
+
 llg::llg(ElementType t, const char* n) : lle (t, 0, 1) {
   lls s("%");
   s << n;
@@ -316,7 +334,7 @@ llfnc::llfnc(const char* n) :
   param     (llvm_i16,   "param"),
   name (n),number(1)  {
 
-  //labnum = 0;
+    intfunc = false;
   
 }
 void llfnc::declare(void) {
@@ -444,6 +462,11 @@ void llfnc::label(unsigned int lab) {
 void llfnc::calli(const char* name) {
   lls str;
   str << "  tail call void @" << name << "(i16* %wstack)\n";
+  *this << str;
+}
+void llfnc::callf(const char* name, lle & param) {
+  lls str;
+  str << "  tail call void @" << name << "(i16* " << param.name << ")\n";
   *this << str;
 }
 

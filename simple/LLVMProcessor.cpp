@@ -25,7 +25,7 @@ static void trace (const char * fmt, ...) {
   vsnprintf (buf, buflen, fmt, arglist);
   va_end (arglist);
   
-  ///printf  ("%s", buf);
+//  printf  ("%s", buf);
   *currentFunction << ";" << buf;
 }
 static lle lastw;
@@ -130,13 +130,13 @@ LLVMProcessor::~LLVMProcessor() {
 }
 /**
  * Pravidlo:
- * za kazde "  %%%ld = cosi..." se musi zvysit citac PerNum o 1.
+ * za kazde "  %%%ld = cosi..." se musi zvysit citac promennych %NN o 1.
  * */
 void LLVMProcessor::c_PragmaLj() {
-  fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
+  //-fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
 }
 void LLVMProcessor::c_PragmaSj() {
-  fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
+  //-fprintf (stdout, "Funkce:%s - unused\n", __FUNCTION__);
 }
 void LLVMProcessor::PopLbl (void) {
   unsigned long tmp = SemPop();
@@ -189,13 +189,6 @@ void LLVMProcessor::c_procinit() {
   if (!RamBegin) {
     RamBegin = RAMORG;
   }
-  /*
-  procFile = fopen ("data_proc_tmp.txt","w+");
-  if (!procFile) {
-    fprintf (stderr, "tmp file cannot be open\n");
-    exit(-1);
-  }
-  */
   RamPtr=RamBegin;
 
   AddInfo ("\nImplementace pro LLVM, Kizarm - testing\n");
@@ -246,23 +239,19 @@ void LLVMProcessor::c_procend() {
   AddInfo ("\nPromenne          ... %04LXH",b);
   AddInfo (" - %04LXH\n",a);
 
-  /*
-  fclose (procFile);
-  remove ("data_proc_tmp.txt");
-  */
 }
 
 /** *************************************************************************/
 
 void LLVMProcessor::c_pushl() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace   ("\tPUSH CARRY; TOC++\n");
   lle e0 = currentFunction->bstack.stackptrw(PushWord);
   lle e1 = currentFunction->carry.load();
   e0.store(e1);
 }
 void LLVMProcessor::c_popl() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   trace   ("\tPOP CARRY [->last %%var, nemeni %%carry]; --TOC\n");
   lle e0 = currentFunction->bstack.stackptrw(PopWord);
   lastb  = e0.load();
@@ -534,7 +523,8 @@ void LLVMProcessor::c_stwi() {
   
   lle e0 = currentFunction->wstack.stackptrw(PopWord);
   lle e1 = e0.load();
-  lastw.wordChange(e1);
+  // vymena na pomocnem stacku zpusobuje blbosti
+//if (!currentFunction->intfunc) lastw.wordChange(e1);
   lastw.store     (e1);
 
   currentFunction->wstack.test();
@@ -606,19 +596,19 @@ void LLVMProcessor::c_addwp() {
 }
 
 void LLVMProcessor::c_addwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("add", n);
 }
 void LLVMProcessor::c_subwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("sub", n);
 }
 void LLVMProcessor::c_mulwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("mul", n);
 }
 void LLVMProcessor::c_divwd (unsigned long int n) {
-  fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
+  //-fprintf (stdout, "Funkce:%s\t%08lX\n", __FUNCTION__, n);
   mathOpWD("udiv", n);
 }
 
@@ -903,17 +893,16 @@ void LLVMProcessor::c_endcase() {
 /** *************************************************************************/
 void LLVMProcessor::c_proced (LPOLOZKA * p, int pos) {
   //-fprintf (stdout, "Funkce:%s -> \"%s\" fpl=%d\n", __FUNCTION__, p->iden, p->fpl);
-  
+  trace      ("\tPROCEDURE %s\n", p->iden);
   ProcNum += 1;
   p->atr   = ProcNum;
-  tempFile = mf;
   funciner = new llfnci (p->iden);
   funciner->declare();
   currentFunction = funciner;
 }
 void LLVMProcessor::c_preturn (LPOLOZKA * p) {
   //-fprintf (stdout, "Funkce:%s -> \"%s\"\n", __FUNCTION__, p->iden);
-  trace       ("\tRETURN INTERNAL %s\n", p->iden);
+  trace       ("\tRETURN PROCEDURE %s\n", p->iden);
   LblNum = 0;
   funciner->close(bodyFunctions);
   currentFunction = mainfunc;
@@ -921,7 +910,7 @@ void LLVMProcessor::c_preturn (LPOLOZKA * p) {
 }
 void LLVMProcessor::c_pcall (char * u) {
   //-fprintf (stdout, "Funkce:%s -> [%s]\n", __FUNCTION__, u);
-  trace       ("\tCALL INTERNAL %s\n", u);
+  trace       ("\tCALL PROCEDURE %s; TOS:=0\n", u);
   currentFunction->calli(u);
   currentFunction->wstack.clear();
 }
@@ -952,6 +941,49 @@ void LLVMProcessor::c_ldaa (unsigned long int a) {
   lastw  = currentFunction->Variables.getelement(e2);
 }
 
+void LLVMProcessor::c_func (LPOLOZKA * p, int pos) {
+  //-fprintf (stdout, "Funkce:%s, \"%s\"\n", __FUNCTION__, p->iden);
+  trace      ("\tFUNCTION \"%s\"\n", p->iden);
+  FuncNum += 1;
+  p->atr   = FuncNum;
+  funciner = new llfnci (p->iden);
+  funciner->intfunc = true;
+  funciner->declare();
+  currentFunction = funciner;
+}
+void LLVMProcessor::c_freturn (LPOLOZKA * p) {
+  //-fprintf (stdout, "Funkce:%s - \"%s\":(%d)\n", __FUNCTION__, p->iden, p->rvs);
+  trace       ("\tRETURN FUNCTION \"%s\"\n", p->iden);
+  LblNum = 0;
+  funciner->close(bodyFunctions);
+  currentFunction = mainfunc;
+  delete funciner;
+}
+static unsigned allocatedWords;
+static lle wshift;
+
+void LLVMProcessor::c_allot() {
+  int a = SemPop();
+  //-fprintf (stdout, "Funkce:%s (%d)\n", __FUNCTION__, a);
+  trace       ("\tALLOC ON TOP %d WORDS\n", a>>4);
+  allocatedWords = a >> 4;
+  wshift = currentFunction->wstore.getelement(allocatedWords);
+  for (unsigned i=0; i<allocatedWords; i+=1)
+    currentFunction->wstack.pusha(0);		// volne misto na stacku
+}
+void LLVMProcessor::c_fcall (char * u) {
+  //-fprintf (stdout, "Funkce:%s (%d) \"%s\"\n", __FUNCTION__, (int) sez_uk->atr, u);
+  trace       ("\tCALL FUNCTION %s; TOS:=1\n", u);
+  currentFunction->callf (u, wshift);
+  currentFunction->wstack.clear(allocatedWords);
+  //fromField = true;
+}
+
+int  LLVMProcessor::c_retval() {
+  //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
+  // do nothing
+  return 0;
+}
 /** *************************************************************************/
 static unsigned beginBadr;
 
@@ -1024,22 +1056,6 @@ void LLVMProcessor::c_disps (char * u) {
   texts.display(u);
 }
 /** *********************************************************************************************************/
-void LLVMProcessor::c_func (LPOLOZKA * p, int pos) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_freturn (LPOLOZKA * p) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_fcall (char * u) {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-void LLVMProcessor::c_allot() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-}
-int  LLVMProcessor::c_retval() {
-  fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
-  return 0;
-}
 void LLVMProcessor::c_skpb() {
   fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
 }

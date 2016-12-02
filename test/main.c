@@ -3,18 +3,10 @@
 #include <string.h>
 #include <dlfcn.h>
 
-#include "PesApi.h"
+#include "../simple/llvm/PesApi.h"
 // Toto je jedina definice !
 RamDef_t Variables;
-/* Nepouziji funkce z peslib.so, napisu je znova.
-static WORD MgetBit (unsigned bitadr) {
-  WORD result = 0u;
-  BYTE val = Variables.Bytes [bitadr >> 3];
-  BYTE ref = (1u << (bitadr & 0x7));
-  if (ref & val) result = 1;
-  return result;
-}
-*/
+
 void ApiNetDriver (WORD * ptr, WORD newdata) {
   WORD * base = Variables.Words;
   size_t index = (ptr - base);
@@ -27,16 +19,6 @@ void ApiDispText (char * str) {
   printf ("DISPLAY : \"%s\"\n", str);
 }
 
-
-
-static void MsetBit (unsigned bitadr, WORD bitvalue) {
-  BYTE ref = (1u << (bitadr & 0x7));
-  if (bitvalue) {
-    Variables.Bytes [bitadr >> 3] |=  ref;
-  } else {
-    Variables.Bytes [bitadr >> 3] &= ~ref;
-  }
-}
 void printGlobals (void) {
   printf ("Carry[.6=C]:%02X\n",   Variables.Bytes[0x227]);
   printf ("060:%04X, 061:%04X\n", Variables.Words[0x60],  Variables.Words[0x61]);
@@ -62,12 +44,12 @@ void printReals (void) {
 }
 /** ******************************************************************************/
 void test (void) {
-  Variables.Words[0x060] = 0x1234;
-  Variables.Words[0x061] = 0x1111;
-  Variables.Words[0x100] = 0xFFFF;
-  Variables.Words[0x102] = 0x5678;
+  Variables.SYS.D32 = 0x1234;
+  Variables.SYS.D33 = 0x1111;
+  Variables.SYS.DX0 = 0xFFFF;
+  Variables.SYS.DY0 = 0x5678;
 
-  MsetBit(0x113E, 1);
+  Variables.SYS.RESET=1;
   PSimple();
   printGlobals();
   printReals();

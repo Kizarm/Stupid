@@ -11,6 +11,8 @@ typedef void (*VHandlePR) (RamDef_t*);
 VHandleV  PSimple;
 VHandlePR PSetRamBasePtr;
 
+static PesApi_t * API;
+
 int LoadLibPes (const char * name) {
   pesHandle = dlopen (name, RTLD_LAZY);
   if (!pesHandle) {
@@ -19,22 +21,22 @@ int LoadLibPes (const char * name) {
     return -1;
   }
   dlerror();
-  PSimple        = dlsym (pesHandle, "Simple");
+  PAHandleV ApiFunc;
+  ApiFunc = dlsym (pesHandle, "GetPesApiPtr");
+  
   if (dlerror()) {
-    fprintf (stderr, "Nelze najit [Simple()]\n");
+    fprintf (stderr, "Nelze najit [GetPesApiPtr]\n");
     dlclose (pesHandle);
     return -1;
   }
-  //-printf("PSimple:%p\n", PSimple);
-  PSetRamBasePtr = dlsym (pesHandle, "SetRamBasePtr");
-  if (dlerror()) {
-    fprintf (stderr, "Nelze najit [SetRamBasePtr()]\n");
-    dlclose (pesHandle);
-    return -1;
-  }
-  //-printf("PSetRamBasePtr:%p\n", PSetRamBasePtr);
-  PSetRamBasePtr(&Variables);
-  printf ("Lib %s is open\n", name);
+  API = ApiFunc ();
+  PSimple        = API->MainPass;
+  PSetRamBasePtr = API->SetRamBase;
+  //printf ("%p, %p, %p\n", API, PSimple, PSetRamBasePtr);
+  if (PSetRamBasePtr) PSetRamBasePtr (& Variables);
+  // set callbacks
+  API->WordChangeDriver  = ApiNetDriver;
+  API->DisplayTextDriver = ApiDispText;
   return 0;
 }
 void ExitLibPes (void) {

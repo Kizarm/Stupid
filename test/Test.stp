@@ -16,7 +16,8 @@ py : array [2] of word;
 
 end
 {
-procedure init (a,b:word; c:real)
+
+procedure pinit (a,b:word; c:real)
 reset'; xx = a; xy = b;
 fa = c; fb = c;
 return
@@ -25,7 +26,7 @@ function inc(a:word):word;
 inc = a+1;
 return
 }
-
+{
 CONST
 ENUM Nic,Pondeli,Utery,Streda,Ctvrtek,Patek,Sobota,Nedele ;
 END
@@ -43,9 +44,16 @@ ELSE
 ENDCASE
 return
 
-if reset then {init(1,2,3.0)} reset' else
+function init(a,b:real):real;
+  init = a+b;
+return
+}
 
-test(5);
+if reset then D32=0x5555; reset' else
+
+D32 = DX0;
+DY0 = D32;
+O0  = I0;
 
 endif
 end
