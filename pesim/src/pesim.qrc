@@ -1,0 +1,9 @@
+<!DOCTYPE RCC>
+ <RCC version="1.0">
+    <qresource prefix="/" >
+      <file alias="per">../img/per.png</file>
+      <file alias="red0">../img/red0.png</file>
+      <file alias="red1">../img/red1.png</file>
+
+    </qresource>
+ </RCC>
