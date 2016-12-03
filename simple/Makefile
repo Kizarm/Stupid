@@ -7,7 +7,7 @@ CFLAGS  = -Os
 CFLAGS += -Wall
 #CFLAGS += -Wno-write-strings
 MFLAGS = -o $(PR)
-LFLAGS = -L../lib -L./llcapi -lasmapi -lllcapi
+LFLAGS = -L../lib -lasmapi -lllcapi
 
 VPATH += ./llib
 

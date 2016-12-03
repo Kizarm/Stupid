@@ -1,5 +1,5 @@
-PREFIX = arm-none-eabi-
-#PREFIX =
+#PREFIX = arm-none-eabi-
+PREFIX =
 ISF ?= Test
 
 PR = test
@@ -70,4 +70,4 @@ test.ll: $(ISF).mac.ll
 	$(CC) -c $(CFLAGS) $(EFLAGS) $< -o $@
 
 clean:
-	rm -f *.s *.o *.so *~ *.ll *.lst *.map *.hex *.err test
+	rm -f *.s *.o *.so *~ *.ll *.lst *.map *.hex *.mac *.err test

@@ -5,6 +5,7 @@
 #include "AnalogIO.h"
 #include "Loop.h"
 //#include "wrap.h"
+#include "../../simple/llvm/PesApi.h"
 
 IODescriptors GIODescriptor;
 
@@ -14,7 +15,9 @@ MainWindow::MainWindow (QWidget * parent, Qt::WindowFlags flags)
   ui->setupUi (this);
   QString s;
 
-  s.sprintf("Automat # %d #", GIODescriptor.NetAddr);
+  GIODescriptor.NetAddr = GStationInfo.NetAddr;
+  s.sprintf("Automat # %d # DATA(%04X-%04X)",
+            GIODescriptor.NetAddr, GStationInfo.DataBegin, GStationInfo.DataEnd);
   setWindowTitle (s);
   setWindowIcon  (ico);
   

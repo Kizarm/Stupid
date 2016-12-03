@@ -155,7 +155,7 @@ void LLVMProcessor::c_endif() {
   currentFunction->branch(tmp);
   currentFunction->label (tmp);
 }
-extern const char * pesll;
+extern "C" const char * pesll;
 void LLVMProcessor::c_procinit() {
   //-fprintf (stdout, "\nFunkce:%s\n", __FUNCTION__);
 
@@ -190,6 +190,12 @@ void LLVMProcessor::c_procend() {
   //-fprintf (stdout, "Funkce:%s\n", __FUNCTION__);
   long int a,b;
   
+  a=RamPtr>>3;
+  b=RamBegin>>3;
+  if (RamPtr&7) {
+    a++;
+  }
+
   currentFunction->exit();
   if (!bodyFunctions.empty()) {
     int i, n = bodyFunctions.size();
@@ -199,21 +205,21 @@ void LLVMProcessor::c_procend() {
     }
   }
   texts.close(*currentFunction);
+  int max = 1024;
+  char * desc = new char [max];
+  snprintf(desc, max, "@GStation = constant %%struct._StationInfo { i32 %d, i16 %ld, i16 %ld }, align 4\n",
+           NetAdr, b, a);
+  *currentFunction << desc;
+  delete desc;
   *currentFunction << pst[m_Type].suffix;
   currentFunction->write (mf);
   fclose (mf);
   
-  char * copy = new char [1024];
-  strncpy (copy, MacF, 1024);
+  char * copy = new char [max];
+  strncpy (copy, MacF, max);
   strcat (copy, ".ll");
   rename (MacF, copy);
   delete [] copy;
-
-  a=RamPtr>>3;
-  b=RamBegin>>3;
-  if (RamPtr&7) {
-    a++;
-  }
 
   AddInfo ("\n");
   AddInfo ("\nAdresa stanice    ... %d",NetAdr);

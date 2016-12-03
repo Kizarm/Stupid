@@ -64,7 +64,7 @@ static unsigned TimeCompilations = 1;
 static int compileModule(const char *, LLVMContext &);
 
 static const char * x86_64_cmd   [] = {"test", "-relocation-model=pic", 0};
-static const char * arm_cm3_cmd  [] = {"test", "-function-sections", 0};
+static const char * arm_cm3_cmd  [] = {"test", "-function-sections", "-mcpu=cortex-m3", 0};
 static const char * arm_cm4f_cmd [] = {"test", "-function-sections", "-mcpu=cortex-m4" , "-mattr=+fp-only-sp,+d16", 0};
 
 static const char ** linecmd [LLVMTypesMax] = {

@@ -1,5 +1,5 @@
 EXES = ctest
-SLIB = libllcapi.so
+SLIB = ../../lib/libllcapi.so
 
 CXX := clang++-3.8
 RTTIFLAG := -fno-rtti
@@ -26,9 +26,9 @@ $(SLIB): $(SOBJS)
 	$(CXX) -o $(SLIB) -shared -fPIC $(SOBJS) $(CLANGLIBS) $(LLVMLDFLAGS)
 	
 $(EXES): $(OBJECTS) $(SLIB)
-	$(CXX) -o $(EXES) $(OBJECTS) -L. -lllcapi
+	$(CXX) -o $(EXES) $(OBJECTS) -L../../lib -lllcapi
 
 clean:
 	-rm -f $(OBJECTS) $(SOBJS) *~
-	-rm -f $(EXES) $(SLIB)
+	-rm -f $(EXES)
 

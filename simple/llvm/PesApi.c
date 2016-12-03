@@ -12,6 +12,8 @@ VHandleV  PSimple;
 VHandlePR PSetRamBasePtr;
 
 static PesApi_t * API;
+// lokalni kopie
+StationInfo GStationInfo;
 
 int LoadLibPes (const char * name) {
   pesHandle = dlopen (name, RTLD_LAZY);
@@ -32,7 +34,12 @@ int LoadLibPes (const char * name) {
   API = ApiFunc ();
   PSimple        = API->MainPass;
   PSetRamBasePtr = API->SetRamBase;
-  //printf ("%p, %p, %p\n", API, PSimple, PSetRamBasePtr);
+  memcpy (&GStationInfo, API->Info, sizeof (StationInfo));
+  /*
+  printf ("Station adr = %d, RAMBEGIN=%04X, RAMEND=%04X\n",
+    GStationInfo.NetAddr, GStationInfo.DataBegin, GStationInfo.DataEnd);
+  printf ("%p, %p, %p, %p\n", API, PSimple, PSetRamBasePtr, API->Info);
+  */
   if (PSetRamBasePtr) PSetRamBasePtr (& Variables);
   // set callbacks
   API->WordChangeDriver  = ApiNetDriver;

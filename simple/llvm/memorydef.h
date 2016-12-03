@@ -7,6 +7,13 @@
 typedef unsigned char  BYTE;
 typedef unsigned short WORD;
 
+struct _StationInfo {
+  unsigned int NetAddr;
+  unsigned short DataBegin;
+  unsigned short DataEnd;
+};
+typedef struct _StationInfo StationInfo;
+
 union PR2PW_u {
   float * PR;
   WORD  * PW;
@@ -24,6 +31,7 @@ struct PesApi_s {
   // API
   void (*SetRamBase) (RamDef_t * ptr);
   void (*MainPass)   (void);
+  const StationInfo * Info;
   // callbacks
   void (*WordChangeDriver)  (WORD * ptr, WORD newdata);  // lze pouzit pro sitova volani
   void (*DisplayTextDriver) (char * str);

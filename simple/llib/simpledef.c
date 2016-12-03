@@ -11,11 +11,17 @@
  * Z toho jde udělat *.so knihovnu pro PC (zatím Linux),
  * nebo *.hex pro automat. Interface je však stejný.
  * */
-
+/*
+const StationInfo GStation = {
+  5, 0x400, 0x430
+};
+*/
+extern const StationInfo GStation;
 // pokud je inicializovana, je v sekci .data
 static PesApi_t MainApi = {
   .SetRamBase = SetRamBasePtr,
-  .MainPass   = Simple
+  .MainPass   = Simple,
+  .Info       = & GStation
 };
 
 RamDef_t * RamBasePtr;
@@ -24,6 +30,7 @@ RamDef_t * RamBasePtr;
 PesApi_t * GetPesApiPtr (void) {
   MainApi.SetRamBase = SetRamBasePtr;   // v MCU lepe inicializovat zde
   MainApi.MainPass   = Simple;          // pokud to bude nekde extra.
+  MainApi.Info       = & GStation;
   //
   MainApi.WordChangeDriver  = 0;
   MainApi.DisplayTextDriver = 0;

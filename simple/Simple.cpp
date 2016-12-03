@@ -35,6 +35,7 @@
 #define   ERRFILE "Errlist.txt"
 
 BaseProcessor * BaseProcessorPtr;
+extern "C" const char * tscript;
 
 FILE * ef;
 FILE * of,*sf;
@@ -64,10 +65,12 @@ static POLOZKA * LastSystem = NULL;
 char  LastOpenedFile[80];
 
 static int Exec (const char * cmd) {
+  int len = 48 - strlen(cmd);
+  if (len < 0) len = 0;
   int res = system(cmd);
   printf ("Command : \"%s\"  ", cmd);
-  if (res) printf ("failed\n");
-  else     printf ("OK\n");
+  if (res) printf ("%*sfailed\n", len, " ");
+  else     printf ("%*sOK\n",     len, " ");
   return res;
 }
 static void Linking (LLVMTypeMachine m) {
@@ -86,15 +89,20 @@ static void Linking (LLVMTypeMachine m) {
     snprintf (cmd, max, "ld -shared -fPIC %s -o %s", oname, soname);
     if (Exec(cmd)) return;
   } else {
+    const char * sname = "script.ld";
+    FILE * sc = fopen(sname,"w");
+    fprintf(sc,"%s",tscript);
+    fclose(sc);
     snprintf (cmd, max, "%sas %s -o %s", prefix, MacF, oname);
     if (Exec(cmd)) return;
-    snprintf (cmd, max, "%sgcc -mthumb -mcpu=%s -Wl,--gc-sections,-Map=pes.map -T script.ld %s -o %s",
-              prefix, procty[m-1], oname, soname);
+    snprintf (cmd, max, "%sgcc -nostartfiles -mthumb -mcpu=%s -Wl,--gc-sections,-Map=pes.map -T %s %s -o %s",
+              prefix, procty[m-1], sname, oname, soname);
     if (Exec(cmd)) return;
     snprintf (cmd, max, "%ssize %s", prefix, soname);
     if (Exec(cmd)) return;
     snprintf (cmd, max, "%sobjcopy --strip-unneeded -O ihex %s %s", prefix, soname, hname);
     if (Exec(cmd)) return;
+    remove (sname);
   }
   remove (oname);
 }

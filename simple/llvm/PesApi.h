@@ -8,7 +8,8 @@ extern "C" {
   
 #include "memorydef.h"
 
-extern RamDef_t  Variables;
+extern StationInfo GStationInfo;
+extern RamDef_t    Variables;
 typedef void       (*VHandleV)  (void);
 typedef PesApi_t * (*PAHandleV) (void);
 
