@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "Loop.h"
+#include "wrap.h"
 #include "iogbl.h"
 #include "gpio.h"
 #include "adac.h"
@@ -35,7 +36,12 @@ void ApiNetDriver (WORD * ptr, WORD newdata) {
   WORD olddata = * ptr;
   if ((index < 0x60) || (index >= 0x80)) return; // sitove wordy
   if (olddata == newdata)                return; // stara data jsou stejna
-  printf ("new WORD at %04lX, %04X => %04X\n", index, olddata, newdata);
+  //-printf ("new WORD at %04lX, %04X => %04X\n", index, olddata, newdata);
+  
+  const unsigned max = 256;
+  char buf [max];
+  unsigned len = snprintf(buf, max, "!%02X:%04lX:%04X\n", GIODescriptor.NetAddr, index, newdata);
+  GIODescriptor.wrap->send (buf, len);
 }
 void ApiDispText (char * str) {
   printf ("DISPLAY : \"%s\"\n", str);
@@ -58,7 +64,6 @@ Loop::~Loop() {
 void Loop::run (void) {
   init();
   for (;;) {
-    //TimerPass();
     usleep (1000);
     loop   ();
   }

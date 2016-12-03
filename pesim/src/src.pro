@@ -17,12 +17,14 @@ SOURCES += Loop.cpp
 SOURCES += gpio.cpp
 SOURCES += adac.cpp
 SOURCES += timer.cpp
+SOURCES += wrap.cpp
 SOURCES += ../../simple/llvm/PesApi.c
 
 HEADERS  = mainwindow.h
 HEADERS += DigitalIO.h
 HEADERS += AnalogIO.h
 HEADERS += Loop.h
+HEADERS += wrap.h
 
 HEADERS += ../inc/iogbl.h
 HEADERS += ../inc/gpio.h

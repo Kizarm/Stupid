@@ -4,7 +4,7 @@
 #include "DigitalIO.h"
 #include "AnalogIO.h"
 #include "Loop.h"
-//#include "wrap.h"
+#include "wrap.h"
 #include "../../simple/llvm/PesApi.h"
 
 IODescriptors GIODescriptor;
@@ -21,8 +21,8 @@ MainWindow::MainWindow (QWidget * parent, Qt::WindowFlags flags)
   setWindowTitle (s);
   setWindowIcon  (ico);
   
-  //wrap = new QtWrap (this);
-  //GIODescriptor.wrap = wrap;
+  wrap = new QtWrap (this);
+  GIODescriptor.wrap = wrap;
   
   bool en;
   
@@ -70,7 +70,7 @@ MainWindow::MainWindow (QWidget * parent, Qt::WindowFlags flags)
   user = new Loop (this);
 }
 MainWindow::~MainWindow() {
-  //delete wrap;
+  delete wrap;
   delete user;
   delete line;
   for (unsigned i=0; i<MaxIO; i++) {

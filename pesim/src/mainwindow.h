@@ -22,7 +22,7 @@ class MainWindow : public QMainWindow {
     QIcon           ico;
     Ui_MainWindow * ui;
     Loop          * user;
-    //QtWrap        * wrap;
+    QtWrap        * wrap;
     QFrame        * line;
 };
 

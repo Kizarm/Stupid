@@ -34,7 +34,7 @@ struct DAPort {
 };
 struct IODescriptors {
   unsigned NetAddr;
-//QtWrap * wrap;
+  QtWrap * wrap;
   IOPort inp [MaxIO];
   IOPort out [MaxIO];
   ADPort adc [MaxAD];
