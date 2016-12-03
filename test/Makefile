@@ -70,4 +70,4 @@ test.ll: $(ISF).mac.ll
 	$(CC) -c $(CFLAGS) $(EFLAGS) $< -o $@
 
 clean:
-	rm -f *.s *.o *.so *~ *.ll *.lst *.map *.hex *.mac *.err test
+	rm -f *.s *.o *.so *~ *.ll *.lst *.map *.dnl *.mac *.err test

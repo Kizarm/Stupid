@@ -64,6 +64,8 @@ static POLOZKA * LastSystem = NULL;
 
 char  LastOpenedFile[80];
 
+static void MakeDnl();
+
 static int Exec (const char * cmd) {
   int len = 48 - strlen(cmd);
   if (len < 0) len = 0;
@@ -74,14 +76,15 @@ static int Exec (const char * cmd) {
   return res;
 }
 static void Linking (LLVMTypeMachine m) {
-  const int max = 1024;
-  char soname[max], oname[max], hname[max];
-//snprintf (soname, max, "libpes.so");
-  snprintf (soname, max, "%s.so", MacF);
-  snprintf ( oname, max, "%s.o",  MacF);
-  snprintf ( hname, max, "%s.hex",MacF);
+  const int maxn = strlen(MacF) + 10;
+  char soname[maxn], oname[maxn];//, hname[maxn];
+//snprintf (soname, maxn, "libpes.so");
+  snprintf (soname, maxn, "%s.so", MacF);
+  snprintf ( oname, maxn, "%s.o",  MacF);
+//snprintf ( hname, maxn, "%s.hex",MacF);
   const char * prefix = "arm-none-eabi-";
   const char * procty [2] = {"cortex-m3","cortex-m4"}; 
+  const int max = 1024;
   char cmd [max];
   if (m == MachineTypeLinux64) {
     snprintf (cmd, max, "as %s -o %s", MacF, oname);
@@ -92,7 +95,7 @@ static void Linking (LLVMTypeMachine m) {
     const char * sname = "script.ld";
     FILE * sc = fopen(sname,"w");
     fprintf(sc,"%s",tscript);
-    fclose(sc);
+    fclose (sc);
     snprintf (cmd, max, "%sas %s -o %s", prefix, MacF, oname);
     if (Exec(cmd)) return;
     snprintf (cmd, max, "%sgcc -nostartfiles -mthumb -mcpu=%s -Wl,--gc-sections,-Map=pes.map -T %s %s -o %s",
@@ -100,9 +103,10 @@ static void Linking (LLVMTypeMachine m) {
     if (Exec(cmd)) return;
     snprintf (cmd, max, "%ssize %s", prefix, soname);
     if (Exec(cmd)) return;
-    snprintf (cmd, max, "%sobjcopy --strip-unneeded -O ihex %s %s", prefix, soname, hname);
+    snprintf (cmd, max, "%sobjcopy --strip-unneeded -O ihex %s %s", prefix, soname, HexF);
     if (Exec(cmd)) return;
     remove (sname);
+    MakeDnl();
   }
   remove (oname);
 }
@@ -316,10 +320,12 @@ int Simple (const char * name, const unsigned flags) {
       MakeDnl();
 
     } else {
-      char copy[1024];
-      strncpy (copy, MacF, 1024);
-      strcat  (copy, ".ll");
+      const int maxi = strlen(MacF) + 10;
+      char copy[maxi];
+      strncpy (copy, MacF,  maxi);
+      strncat (copy, ".ll", maxi);
       CompileLLtoASFile (copy, MacF, cf.F.TGT);
+      remove (copy);
       Linking (cf.F.TGT);
     }
     fclose (ef);
@@ -333,6 +339,7 @@ int Simple (const char * name, const unsigned flags) {
   CloseAllFiles (arg);
   FreeConfig();
 
+  remove (ErrF);
   AddInfo ("Preklad uspesne dokoncen\n");
 
   delete BaseProcessorPtr;

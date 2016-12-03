@@ -215,6 +215,7 @@ void LLVMProcessor::c_procend() {
   currentFunction->write (mf);
   fclose (mf);
   
+  max = strlen (MacF) + 10;
   char * copy = new char [max];
   strncpy (copy, MacF, max);
   strcat (copy, ".ll");
