@@ -308,6 +308,8 @@ int CompileLLtoASFile (const char * infile, const char * outfile, LLVMTypeMachin
 /*                                                                           */
 /*###########################################################################*/
 int Simple (const char * name, const unsigned flags) {
+  setlocale (LC_NUMERIC, "POSIX");
+
   char * arg = strdup (name);
   int result = 0;
   argm = arg;
