@@ -19,7 +19,7 @@ SOURCES += gpio.cpp
 SOURCES += adac.cpp
 SOURCES += timer.cpp
 SOURCES += wrap.cpp
-SOURCES += ../../../posix/simple/llvm/PesApi.c
+SOURCES += ../../posix/simple/llvm/PesApi.c
 
 HEADERS  = pesim.h
 HEADERS += DigitalIO.h
