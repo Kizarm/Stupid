@@ -1,0 +1,37 @@
+<!DOCTYPE RCC>
+ <RCC version="1.0">
+    <qresource prefix="/" >
+      <file alias="abs">../../img/abs.png</file>
+      <file alias="ani">../../img/ani.png</file>
+      <file alias="anl">../../img/anl.png</file>
+      <file alias="ano">../../img/ano.png</file>
+      <file alias="bit">../../img/bit.png</file>
+      <file alias="dic">../../img/dic.png</file>
+      <file alias="dig">../../img/dig.png</file>
+      <file alias="dio">../../img/dio.png</file>
+      <file alias="dis">../../img/dis.png</file>
+      <file alias="doc">../../img/doc.png</file>
+      <file alias="doo">../../img/doo.png</file>
+      <file alias="key">../../img/key.png</file>
+      <file alias="loc">../../img/loc.png</file>
+      <file alias="net">../../img/net.png</file>
+      <file alias="per">../../img/per.png</file>
+      <file alias="ptr">../../img/ptr.png</file>
+      <file alias="pub">../../img/pub.png</file>
+      <file alias="reg">../../img/reg.png</file>
+      <file alias="rel">../../img/rel.png</file>
+      <file alias="rtc">../../img/rtc.png</file>
+      <file alias="set">../../img/set.png</file>
+      <file alias="sys">../../img/sys.png</file>
+      <file alias="tim">../../img/tim.png</file>
+      <file alias="trm">../../img/trm.png</file>
+      <file alias="wrd">../../img/wrd.png</file>
+
+      <file alias="diag">../../img/diag.png</file>
+      <file alias="build">../../img/build.png</file>
+      <file alias="load">../../img/load.png</file>
+      
+      <file alias="red0">../../img/red0.png</file>
+      <file alias="red1">../../img/red1.png</file>
+    </qresource>
+ </RCC>
