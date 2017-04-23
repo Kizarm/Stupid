@@ -6,7 +6,7 @@ CFLAGS += -Wall
 CFLAGS += -I./lib
 
 MFLAGS = -o $(PR)
-LFLAGS = -L./lib -lstpapi -lasmapi
+LFLAGS = -L./lib -lstpapi -lasmapi -lllcapi
 
 ifeq ($(OS),Windows_NT)
 REMOVE = DEL

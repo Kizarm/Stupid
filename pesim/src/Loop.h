@@ -11,6 +11,7 @@ class Loop : public QThread {
     void run (void);
 
   private:
+    bool running;
 
 };
 

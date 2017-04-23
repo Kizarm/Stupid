@@ -37,13 +37,19 @@ void QtWrap::readPendingDatagrams (void) {
     delete [] sdata;
   }
 }
+uint16_t swap_bytes (uint16_t word) {
+  uint16_t result = (word & 0xFF) << 8;
+  result += (word >> 8) & 0xFF;
+  return result;
+}
 
 unsigned int QtWrap::rcvd (const char* data, unsigned int) {
   unsigned naddr, addr, value; 
-  unsigned n = sscanf(data, "!%02X:%04X:%04X\n", &naddr, &addr, &value);
-  //printf ("N=%d, %d:%04X:%04X\n", n, naddr, addr, value);
-  if (n!=3)                           return 0; // chyba
-  if (naddr == GIODescriptor.NetAddr) return 0; // pro mne, nezajem
-  Variables.Words[addr] = value;
+  unsigned n = sscanf(data, "#%02X:%02X%04X\r\n", &naddr, &addr, &value);
+  if (n!=3)          return 0; // chyba
+  unsigned hdr = GIODescriptor.NetAddr;
+  if (naddr == hdr) return 0;
+  // printf ("N=%d, %02X:%04X:%04X\n", n, naddr, addr, value);
+  Variables.Words[addr] = /*swap_bytes*/ (value);
   return 0;
 }

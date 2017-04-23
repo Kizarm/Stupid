@@ -1,5 +1,5 @@
-PR = ../Simple
-#PR = ../lib/libstpapi.a
+#PR = ../Simple
+PR = ../lib/libstpapi.a
 CC = gcc
 CXX= g++
 #CXX= clang++-3.5
@@ -47,8 +47,8 @@ OBJECTS+= main.o
 
 OBJECTS+= peslib.o
 
-$(PR): $(OBJECTS)
-	$(CXX) $(MFLAGS) $(OBJECTS) $(LFLAGS)
+#$(PR): $(OBJECTS)
+#	$(CXX) $(MFLAGS) $(OBJECTS) $(LFLAGS)
 clean:
 	rm -f *.o *~
 %.o: %.C
@@ -58,5 +58,5 @@ clean:
 %.o: %.s
 	as $< -o $@
 
-#$(PR): $(OBJECTS)
-#	ar rcs $(PR) $(OBJECTS)
+$(PR): $(OBJECTS)
+	ar rcs $(PR) $(OBJECTS)

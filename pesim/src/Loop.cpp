@@ -29,6 +29,7 @@ static GPIO X11(IOPortX,11, IO_Input, & Variables.SYS.DX0), Y11(IOPortY,11, IO_O
 static Timers TIMS;
 // Toto je jedina definice !
 RamDef_t Variables;
+extern uint16_t swap_bytes (uint16_t word);
 
 void ApiNetDriver (WORD * ptr, WORD newdata) {
   WORD * base = Variables.Words;
@@ -40,7 +41,9 @@ void ApiNetDriver (WORD * ptr, WORD newdata) {
   
   const unsigned max = 256;
   char buf [max];
-  unsigned len = snprintf(buf, max, "!%02X:%04lX:%04X\n", GIODescriptor.NetAddr, index, newdata);
+  unsigned char hdr = GIODescriptor.NetAddr;//0x6F;
+  unsigned len = snprintf(buf, max, "#%02X:%02lX%04X\r\n", hdr, index, /*swap_bytes*/ (newdata));
+  //printf("%s", buf);
   GIODescriptor.wrap->send (buf, len);
 }
 void ApiDispText (char * str) {
@@ -55,15 +58,22 @@ void loop (void) {
 }
 
 Loop::Loop (QObject * parent) : QThread (parent) {
+  running = true;
   start();
 }
 Loop::~Loop() {
   if (isRunning()) terminate ();
   wait();
+  /*
+  running = false;
+  for (;;) {
+    if (isFinished()) break;
+  }
+  */
 }
 void Loop::run (void) {
   init();
-  for (;;) {
+  while (running) {
     usleep (1000);
     loop   ();
   }

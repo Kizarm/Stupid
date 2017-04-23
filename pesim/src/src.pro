@@ -1,14 +1,14 @@
 TARGET = pesim
-#TEMPLATE = lib
-TEMPLATE = app
+TEMPLATE = lib
+#TEMPLATE = app
 CONFIG += warn_on \
           thread \
-          qt
+          qt staticlib
 QT += network
 
 INCLUDEPATH += ../inc/
 
-SOURCES  = main.cpp
+SOURCES  = 
 SOURCES += mainwindow.cpp
 SOURCES += DigitalIO.cpp
 SOURCES += AnalogIO.cpp
@@ -35,9 +35,9 @@ DESTDIR  = ../bin
 
 FORMS    = pesim.ui
 
-LIBS     += -ldl
+#LIBS     += -ldl
 
-RESOURCES += pesim.qrc
+#RESOURCES += pesim.qrc
 
 unix {
     MOC_DIR     = moc
