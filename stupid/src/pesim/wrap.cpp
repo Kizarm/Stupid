@@ -13,6 +13,11 @@ QtWrap::QtWrap (QObject * parent) : QObject (parent) {
 QtWrap::~QtWrap () {
   delete socket;
 }
+void QtWrap::DisplayText (const char * text) {
+  QString str = QString::fromUtf8 (text);
+  emit SetText (str);
+}
+
 unsigned QtWrap::send (const char * data, unsigned len) {
   unsigned n = socket->writeDatagram(data, len, QHostAddress::Broadcast, port);
   //printf("send %d\n", n);

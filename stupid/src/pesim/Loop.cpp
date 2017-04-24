@@ -48,6 +48,7 @@ void ApiNetDriver (WORD * ptr, WORD newdata) {
 }
 void ApiDispText (char * str) {
   printf ("DISPLAY : \"%s\"\n", str);
+  GIODescriptor.wrap->DisplayText (str);
 }
 void init (void) {
   Variables.SYS.RESET=1;

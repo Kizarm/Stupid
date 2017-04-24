@@ -63,6 +63,14 @@ SimDialog::SimDialog (QWidget * par, Qt::WindowFlags flags)
     ui->analogLayout->addWidget (p);
     GIODescriptor.dac[i].io = p;
   }
+  disp = new QLabel (this);
+  QFont f ("Times", 14, QFont::Bold);
+  disp->setFont(f);
+  QPalette p;
+  p.setColor (QPalette::WindowText, Qt::darkGreen);
+  disp->setPalette(p);
+  ui->verticalLayout->addWidget(disp);
+  connect(wrap, SIGNAL(SetText(QString)), this, SLOT(DisplayText(QString)));
   
   user = 0;
 }
@@ -78,8 +86,13 @@ SimDialog::~SimDialog() {
     delete GIODescriptor.adc[i].io;
     delete GIODescriptor.dac[i].io;
   }
+  delete disp;
   delete ui;
 }
+void SimDialog::DisplayText (const QString& str) {
+  disp->setText (str);
+}
+
 void SimDialog::StartSimulator (void) {
   QString s;
   GIODescriptor.NetAddr = GStationInfo.NetAddr;

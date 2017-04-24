@@ -15,6 +15,7 @@ class Loop;
 class QtWrap;
 class QFrame;
 class QCloseEvent;
+class QLabel;
 
 class SimDialog : public QDialog {
   Q_OBJECT
@@ -23,6 +24,7 @@ class SimDialog : public QDialog {
     void StartSimulator (void);
     ~SimDialog();
   public slots:
+    void DisplayText (const QString & str);
   protected:
     void closeEvent ( QCloseEvent * event );
   private:
@@ -31,6 +33,7 @@ class SimDialog : public QDialog {
     Loop          * user;
     QtWrap        * wrap;
     QFrame        * line;
+    QLabel        * disp;
 };
 
 #endif // PESIMHEAD_H

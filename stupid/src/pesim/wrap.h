@@ -14,6 +14,9 @@ class QtWrap : public QObject {
     virtual ~QtWrap ();
     unsigned send (const char * data, unsigned len);
     unsigned rcvd (const char * data, unsigned len);
+    void DisplayText (const char * text);
+  signals:
+    void SetText (const QString & str);
   private:
     unsigned     port;
     QUdpSocket * socket;
