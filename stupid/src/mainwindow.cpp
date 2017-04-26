@@ -48,7 +48,7 @@ MainWindow::MainWindow (QWidget * parent)
   setting  = new QSettings ("KizarmSoft", "Stupid");
   viewer   = new ViewDialog (this);
   simulace = new SimDialog  (this);
-  acWiew   = ui->toolBar->addAction (QIcon(":diag"), tr ("Viewer"), viewer, SLOT (show()));
+  acWiew   = ui->toolBar->addAction (QIcon(":diag"), tr ("Viewer"), viewer, SLOT (StartWatching()));
   acWiew->setShortcut (QKeySequence (Qt::Key_F9));
   TestSettings();
   loader   = new CLoaderDlg (pes, this);
@@ -80,7 +80,7 @@ void MainWindow::Visibility (void) {
     case MachineTypeCortexM4F:
       acLoad->setVisible(false);
     case MachineTypeLinux64:
-      acWiew->setVisible(false);
+      //acWiew->setVisible(false);
       break;
     default:
       break;
@@ -100,6 +100,7 @@ void MainWindow::setupTarget() {
   psel->setCurrentIndex(n);
   cf.F.TGT = (LLVMTypeMachine) n;
   Visibility();
+  viewer->TargetChanged (cf.F.TGT);
   
   ui->toolBar->addSeparator();
   ui->toolBar->addWidget(psel);
@@ -109,6 +110,7 @@ void MainWindow::changeTarget (int n) {
   setting->setValue("Target",  n);
   cf.F.TGT = (LLVMTypeMachine) n;
   Visibility();
+  viewer->TargetChanged (cf.F.TGT);
 }
 
 void MainWindow::TestSettings (void) {

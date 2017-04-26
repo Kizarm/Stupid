@@ -4,6 +4,7 @@
 //#include <QtGui/QDialog>
 #include <QDialog>
 #include <QIcon>
+#include "../posix/lib/Compiler.h"
 
 class QSettings;
 class WatchElement;
@@ -35,8 +36,10 @@ class ViewDialog : public QDialog {
     void RemoveFileWatchs  (void);
     void AddFileWatchs     (const QString & filename);
     void SetDnlItemPointer (DnlItem * ptr);
+    void TargetChanged     (LLVMTypeMachine tgt);
     ~ViewDialog();
   public slots:
+    void StartWatching (void);
     void TreeDouble (QTreeWidgetItem  * i, int n);
     void TreeSingle (QTreeWidgetItem  * i, int n);
     void TabSel     (QTableWidgetItem * i);

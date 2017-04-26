@@ -9,6 +9,7 @@
 #include "watchloop.h"
 #include "mainwindow.h"
 #include "DnlItem.h"
+#include "cudppes.h"
 
 ViewDialog::ViewDialog (MainWindow * par, Qt::WindowFlags flags) 
   : QDialog (par, flags), mainico (":per"), msgFont(), msgPalette(), list () {
@@ -32,7 +33,7 @@ ViewDialog::ViewDialog (MainWindow * par, Qt::WindowFlags flags)
   
   loop = new WatchLoop (this);
   // pes  = new CUSBPes   ();
-  pes  = parent->GenNetDriver();
+  pes  = parent->GetNetDriver();
   pes->SetParent       (this);
   loop->setPes   (pes);
   loop->setList  (&list);
@@ -62,7 +63,6 @@ ViewDialog::ViewDialog (MainWindow * par, Qt::WindowFlags flags)
   running = false;
   
   TestSettings();
-  ComInit ();
 }
 ViewDialog::~ViewDialog() {
   delete dnlvar;
@@ -71,11 +71,34 @@ ViewDialog::~ViewDialog() {
   delete ally;
   delete ui;
   if (!pes->isDisabled()) pes->COM_Close();
-  // delete pes;
   for (int n=0; n<30; n++) {
     if (Station[n]) delete Station [n];
   }
 }
+void ViewDialog::StartWatching (void) {
+  ComInit ();
+  show();
+}
+void ViewDialog::TargetChanged (LLVMTypeMachine tgt) {
+  if (!pes->isDisabled()) pes->COM_Close();
+  delete pes;
+  switch (tgt) {
+    case MachineTypeLinux64:
+      pes = new CUDPPes ();
+      break;
+    case MachineTypeCortexM0:
+    case MachineTypeCortexM3:
+    case MachineTypeCortexM4F:
+    default:
+      pes = new CUSBPes ();
+      break;
+  };
+  parent->SetNetDriver (pes);
+  pes->SetParent       (this);
+  loop->setPes   (pes);
+  qDebug("View: Target changed to %d", (int) tgt);
+}
+
 // posledni vybrana stanice se prida do Action.
 bool ViewDialog::TestSettings (void) {
   bool result = false;

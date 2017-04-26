@@ -27,6 +27,7 @@ SOURCES += ./view/watchloop.cpp
 SOURCES += ./view/DnlItem.cpp
 SOURCES += ./view/comm/PesNet.cpp
 SOURCES += ./view/comm/USBPes.cpp
+SOURCES += ./view/comm/cudppes.cpp
 
 SOURCES += ./load/Loader.cpp
 
@@ -45,6 +46,7 @@ HEADERS += ./view/DnlItem.h
 #HEADERS += cpes.h
 HEADERS += ./view/comm/PesNet.h
 HEADERS += ./view/comm/USBPes.h
+HEADERS += ./view/comm/cudppes.h
 
 HEADERS += ./load/Loader.h
 

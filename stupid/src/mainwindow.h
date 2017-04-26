@@ -82,7 +82,8 @@ class MainWindow : public QMainWindow {
     virtual ~MainWindow();
     QMenu     * GetMenuNet  (void) {return menuNet;};
     QSettings * GetSettings (void) {return setting;};
-    CPesNet   * GenNetDriver(void) {return pes;};
+    CPesNet   * GetNetDriver(void) {return pes;};
+    void SetNetDriver(CPesNet * p) {pes=p;};
     //void    Progress   (const char * text);
     void        DisplayStr  (const char * msg);
 
