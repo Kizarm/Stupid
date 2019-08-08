@@ -3,7 +3,7 @@ PR = ../lib/libstpapi.a
 CC = gcc
 CXX= g++
 #CXX= clang++-3.5
-CFLAGS  = -Os -DUNIX
+CFLAGS  = -Os -DUNIX -g
 CFLAGS += -Wall
 #CFLAGS += -Wno-write-strings
 MFLAGS = -o $(PR)
@@ -43,9 +43,17 @@ OBJECTS+= 60list.o
 OBJECTS+= 60zasob.o
 OBJECTS+= 60znak.o
 
-OBJECTS+= main.o
+#OBJECTS+= main.o
 
+PLATFRM := $(shell uname -m)
+ifeq ($(PLATFRM), x86_64)
+CFLAGS += -DPC64=1
+OBJECTS+= peslib64.o
+else ifeq ($(PLATFRM), armv7l)
+CFLAGS += -DARM32=1
 OBJECTS+= peslib.o
+endif
+
 
 #$(PR): $(OBJECTS)
 #	$(CXX) $(MFLAGS) $(OBJECTS) $(LFLAGS)
@@ -54,7 +62,7 @@ clean:
 %.o: %.C
 	$(CC) -c $(CFLAGS) $<
 %.o: %.cpp
-	$(CXX) -c $(CFLAGS) $<
+	$(CXX) -std=c++17 -c $(CFLAGS) $<
 %.o: %.s
 	as $< -o $@
 

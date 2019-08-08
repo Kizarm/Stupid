@@ -107,7 +107,7 @@ static void DataBegin() {
 /*---------------------------------------------------------------------------*/
 
 static void Prirazeni (char * t) {
-  char tn[ID_DEL],s[ID_DEL];
+  char tn[ID_DEL],s[ID_DEL + 16];
   int  a;
   int  poz;
   a=1;
@@ -170,7 +170,7 @@ static void Prirazeni (char * t) {
 #define  UVOZ     (0x22)
 
 static void Displej() {
-  char tn[RET_DEL],s[ID_DEL];
+  char tn[RET_DEL],s[ID_DEL + 16];
 
   je();
   {
@@ -204,7 +204,7 @@ static void Displej() {
 
 /*---------------------------------------------------------------------------*/
 static void Vytisk() {
-  char tn[RET_DEL],s[ID_DEL];
+  char tn[RET_DEL],s[ID_DEL + 16];
 
   je();
   {
@@ -670,7 +670,7 @@ static void FileInclude() {
 
 void SetConfiguration (char * name) {
   char typ[255], *ptr = name, *typ_ptr = typ;
-  char msg[255];
+  char msg[255 + 256];
 
   while (*ptr != 0) {
     if (*ptr == ' ' || *ptr == '-' || *ptr == '_') {

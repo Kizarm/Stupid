@@ -94,7 +94,11 @@ void lle::stored(double n) {
   D2U dd;
   dd.d = n;
   char buf [64];
+#ifdef PC64
   snprintf (buf, 64, "0x%016lX", dd.u);
+#else
+  snprintf (buf, 64, "0x%016LX", dd.u);
+#endif
   body << "  store float " << buf <<                 ", " << type << " " << name <<  align << "\n";
   * currentFunction << * this;
 }

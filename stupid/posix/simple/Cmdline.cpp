@@ -177,47 +177,15 @@ void FName (char * s,char * e) {
   char * p = t;
   strcpy (s,"");
   strcpy (e,"");
-//  return;
-
-  /*   je();{  je();{  Drive(t);      if(pkk()){ strcat(s,t);    }
-          if(neb()){ nic();
-          }}vse();
-     if(zrtz()){   je();{  KlSlovo("\\"); if(pkk()){ strcat(s,"\\"); }
-          if(neb()){ nic();
-          }}vse();
-     if(zrtz()){   _sled();do{ SubDir(t);
-                if(pkk()){ strcat(s,t); }
-          }while(sled_());
-     if(zrtz()){   Name(t);            if(pkk()){ strcat(s,t); }
-     if(zrtz())
-     {
-      je();
-      {
-        KlSlovo(".");
-        if(zrtz())
-        {
-          Name(e);
-          if(zrtz())
-          {
-            if(strlen(e)>3)
-            {
-              Nepravda();
-            }
-          }
-        }
-        if(neb())
-        {
-          nic(); strcpy(e,"");
-        }
-      }vse();
-     }}}}}vse();
-  */
   int n;
 
   je();
   {
-    while (ZnakCtiMV() != -1)
+    while (/*(int)ZnakCtiMV() != -1*/ true) {
+      ZnakCtiMV();
+      if (znak_posl == (char) -1) break;
       *p++ = znak_posl;
+    }
     *p = 0;
     strcpy (s,t);
     p = strrchr (s,'.');

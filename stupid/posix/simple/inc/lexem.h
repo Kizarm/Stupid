@@ -7,9 +7,9 @@
 
 
 //#define  RET_DEL   (81)	
-#define  RET_DEL   (300)	
+#define  RET_DEL   (600)	
 //#define  ID_DEL   (81)
-#define  ID_DEL   (300)
+#define  ID_DEL   (600)
 
 extern void WriteLine2MF(char write);
 extern void WriteMyLine2MF(int pos);

@@ -100,14 +100,17 @@ char Text[LINE_MAX]; static char *U;
 #define INCLUDE_MAX 5
 struct _COSI_ {
    word Path; long Loc; int Next, Line;
-} IS[INCLUDE_MAX], *ISP;
+};
+static struct _COSI_ ISX [INCLUDE_MAX + 1];
+static struct _COSI_ * const IS = ISX + 1, *ISP;
+
 static FILE *InF; /*FILE *OutF;*/
 char **FileTab; long Files;
 int StartF, CurF;
 static int FileMax;
 
 void FileInit(void) {
-   ISP = IS - 1, FileTab = 0, Files = 0, FileMax = 0;
+   ISP  = IS - 1, FileTab = 0, Files = 0, FileMax = 0;
 }
 
 static byte ERRORS = 0;
@@ -557,7 +560,7 @@ RetHex:
                      Ret(SEMI);
                   }
                } else {
-                  if (Next == '\n') Line++; Next = fgetc(InF);
+                  if (Next == '\n') {Line++; Next = fgetc(InF);}
                }
             }
             FATAL("Unexpected EOF inside comment.");

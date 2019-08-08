@@ -14,6 +14,7 @@ void Logging (const char *buff) {
 
 int main (int argc,char *argv[]) {
   int result;
+  
   if (argc < 2) {
     fprintf(stdout, "Pouziti:\n\t%s filename.stp [|i|m|c|f]\n", argv[0]);
     fprintf(stdout, " i target native code (*.dll,*.so)\n");
@@ -38,6 +39,10 @@ int main (int argc,char *argv[]) {
   } else {
                                   cf.F.TGT = LLVMTypesMax;
   }
+  
+  //cf.F.TGT = LLVMTypesMax;
+  //cf.F.TGT = MachineTypeCortexM4F;
+  //result = Simple("A.stp" , cf.Common);
   result = Simple(argv[1] , cf.Common);
   return result;
 }

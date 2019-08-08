@@ -456,7 +456,7 @@ void ProcedureCall() {
 }
 
 void FunctionCall (char * t) {
-  char u[ID_DEL],v[ID_DEL],s[ID_DEL];
+  char u[ID_DEL],v[ID_DEL],s[ID_DEL + 16];
   memset (u, 0, ID_DEL);
   memset (v, 0, ID_DEL);
   memset (s, 0, ID_DEL);

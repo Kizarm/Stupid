@@ -194,7 +194,7 @@ void Qualifier (char * v,ATRIBUT a,unsigned long si) {
 /*---------------------------------------------------------------------------*/
 
 void VarReference (char * t) {
-  char u[ID_DEL],v[ID_DEL],w[ID_DEL];
+  char u[ID_DEL],v[ID_DEL],w[3*ID_DEL];
   char c='\0';
   ATRIBUT a=0L;
   unsigned long  si=0;

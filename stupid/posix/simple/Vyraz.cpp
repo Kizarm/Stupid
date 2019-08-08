@@ -371,10 +371,10 @@ void Macro() {
 }
 
 void JPrvek (char * typ) {
-  char t[ID_DEL],u[ID_DEL];
+  char t[ID_DEL],u[ID_DEL + 16];
   int  ki;
   memset (t, 0, ID_DEL);
-  memset (u, 0, ID_DEL);
+  memset (u, 0, ID_DEL + 16);
 
   Macro();
   je();

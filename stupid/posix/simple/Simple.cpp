@@ -117,9 +117,13 @@ static int Linking (LLVMTypeMachine m) {
   snprintf (soname, maxn, "%s.so", MacF);
   snprintf ( oname, maxn, "%s.o",  MacF);
 //snprintf ( hname, maxn, "%s.hex",MacF);
+#if PC64
   const char * prefix = "arm-none-eabi-";
+#else
+  const char * prefix = "";
+#endif
   const char * procty [3] = {"cortex-m0","cortex-m3","cortex-m4"}; 
-  const int max = 1024;
+  const int max = 0x1000;
   char cmd [max];
   if (m == MachineTypeLinux64) {
     snprintf (cmd, max, "as %s -o %s", MacF, oname);
@@ -226,7 +230,7 @@ static void MakeDnl() {
 
   remove (DnlF);
   if (rename (HexF,DnlF) != 0) {
-    char str[0xFF];
+    char str[0x1000];
     sprintf (str,"Soubor \'%s\' nelze nahradit.", DnlF);
     ErrFatal (str);
   }
@@ -249,8 +253,8 @@ static bool OptimizeMac() {
   remove (MacF);
   //-printf  ("Optimalizace ukoncena - rename (%s,%s)\n", MaoF,MacF);
   if (rename (MaoF,MacF) < 0) {
-    char  str[0xFF];
-    snprintf (str, 0xFF,"Soubor \'%s\' nelze nahradit.", MacF);
+    char  str[0x1000];
+    snprintf (str, 0x01000,"Soubor \'%s\' nelze nahradit.", MacF);
     ErrFatal (str);
   }
   return true;
@@ -279,7 +283,11 @@ static void InitFlags (const unsigned flags) {
 int CompileLLtoASFile (const char * infile, const char * outfile, LLVMTypeMachine f) {
   const unsigned max = 1024;
   char   cmdbuf [max];
+#if PC64
   const char * llc = "llc-3.8";
+#else
+  const char * llc = "llc";
+#endif
   switch (f) {
     case MachineTypeLinux64:
       snprintf (cmdbuf, max, "%s -O3 -relocation-model=pic %s -o %s",
@@ -396,7 +404,7 @@ int Simple (const char * name, const unsigned flags) {
       }
     }
     fclose (ef);
-  } catch (CError ex) {
+  } catch (CError & ex) {
     AddInfo (ex.GetError());
     CloseAllFiles (arg);
     FreeConfig();

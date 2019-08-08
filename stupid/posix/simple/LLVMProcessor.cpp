@@ -49,6 +49,7 @@ struct LLVMTexts {
   const char * suffix;
 };
 static const LLVMTexts pst[LLVMTypesMax] = {
+#if PC64
   {
     "target datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\"\n"
     "target triple = \"x86_64-pc-linux-gnu\"\n",
@@ -59,6 +60,14 @@ static const LLVMTexts pst[LLVMTypesMax] = {
     "\"no-nans-fp-math\"=\"false\" \"stack-protector-buffer-size\"=\"8\" \"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n"
     "attributes #2 = { nounwind }"
   },
+#else
+  {
+    "target datalayout = \"e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64\"\n"
+    "target triple = \"armv6k-unknown-linux-gnueabihf\"\n",
+    
+    "attributes #0 = { noinline nounwind optnone \"correctly-rounded-divide-sqrt-fp-math\"=\"false\" \"disable-tail-calls\"=\"false\" \"less-precise-fpmad\"=\"false\" \"no-frame-pointer-elim\"=\"true\" \"no-frame-pointer-elim-non-leaf\" \"no-infs-fp-math\"=\"false\" \"no-jump-tables\"=\"false\" \"no-nans-fp-math\"=\"false\" \"no-signed-zeros-fp-math\"=\"false\" \"no-trapping-math\"=\"false\" \"stack-protector-buffer-size\"=\"8\" \"target-cpu\"=\"arm1176j-s\" \"target-features\"=\"+armv6k,+dsp,+strict-align,-thumb-mode\" \"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n"
+  },
+#endif
   {
     "target datalayout = \"e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64\"\n"
     "target triple = \"thumbv6m--\"\n",
@@ -170,7 +179,7 @@ void LLVMProcessor::c_endif() {
   currentFunction->branch(tmp);
   currentFunction->label (tmp);
 }
-extern "C" const char * pesll;
+extern "C" const char * pesllxx;
 void LLVMProcessor::c_procinit() {
   //-fprintf (stdout, "\nFunkce:%s\n", __FUNCTION__);
 
@@ -195,8 +204,9 @@ void LLVMProcessor::c_procinit() {
   char buffer [bufmax];
   int count = 0;
   count += snprintf (buffer + count, bufmax - count, "%s\n", pst[m_Type].prefix);
+// printf ("pesllxx: %s\n", pesllxx);
   *currentFunction << buffer;
-  *currentFunction << pesll;
+  *currentFunction << pesllxx;
   
   currentFunction->declare();
   
@@ -239,7 +249,7 @@ void LLVMProcessor::c_procend() {
 
 //AddInfo ("\n");
   AddInfo ("\nAdresa stanice    ... %d",NetAdr);
-  AddInfo ("\nRelocation by Linker script, user data len = 0x%04LX bytes\n", a-b);
+  AddInfo ("\nRelocation by Linker script, user data len = 0x%04lX bytes\n", a-b);
   /*
   AddInfo ("\nProgram           ... %08LXH",0x08000000ul + RomBegin);
   AddInfo ("\nPromenne          ... %08LXH",0x20000000ul + b);
@@ -434,7 +444,11 @@ void LLVMProcessor::c_ldrim() {
   t.h = SemPop();       // !!! neprenositelna na be
   t.l = SemPop();
   d.d = t.x;    // musi byt double a z toho teprve hex string
+#if PC64
   trace  ("\tLOAD IMM %g, 0x%016lX -> @TOS; TOS++\n", t.x, d.u);
+#else
+  trace  ("\tLOAD IMM %g, 0x%016lX -> @TOS; TOS++\n", t.x, d.u);
+#endif
   lle e0 = currentFunction->wstack.stackptrr(PushReal);
   e0.stored (d.d);
   

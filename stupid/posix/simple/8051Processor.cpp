@@ -143,7 +143,7 @@ void I8051Processor::rjump (int n) {
 /*---------------------------------------------------------------------------*/
 
 void I8051Processor::FileAppend (FILE * to,FILE * from) {
-  char c;
+  int c;
   c=getc (from);
   while (c!=EOF) {
     putc (c,to);
@@ -240,13 +240,13 @@ void I8051Processor::c_procend() {
   AddInfo ("\nAdresa stanice    ... %d",NetAdr);
   AddInfo ("\nPocet procedur    ... %d",ProcNum);
   AddInfo ("\nPocet funkci      ... %d",FuncNum);
-  AddInfo ("\nDelka textu v prg ... %04LXH        ",TSize);
+  AddInfo ("\nDelka textu v prg ... %04lXH        ",TSize);
   printf ("  = %ld",TSize);
-  AddInfo ("\nProgram           ... %04LXH",RomBegin);
-  AddInfo (" - %04LXH",RomBegin+CSize);
+  AddInfo ("\nProgram           ... %04lXH",RomBegin);
+  AddInfo (" - %04lXH",RomBegin+CSize);
   printf ("  = %ld",CSize);
-  AddInfo ("\nPromenne          ... %04LXH",b);
-  AddInfo (" - %04LXH",a);
+  AddInfo ("\nPromenne          ... %04lXH",b);
+  AddInfo (" - %04lXH",a);
   printf ("  = %ld", (a-b));
   AddInfo ("\nNutny zasobnik    ... %d",MaxSp);
   AddInfo ("\n");
@@ -387,13 +387,13 @@ void I8051Processor::push_a (void) {
 void I8051Processor::c_lit (unsigned long a) {
   push_a();
   if (a) {
-    fprintf (mf,"\n\tMOV   "R1L",#0%lXH",  a     &0xff);
-    fprintf (mf,"\n\tMOV   "R1H",#0%lXH", (a>>8) &0xff);
+    fprintf (mf,"\n\tMOV   " R1L ",#0%lXH",  a     &0xff);
+    fprintf (mf,"\n\tMOV   " R1H ",#0%lXH", (a>>8) &0xff);
     CSize+=4;
   } else {
     fprintf (mf,"\n\tCLR   A");
-    fprintf (mf,"\n\tMOV   "R1L",A");
-    fprintf (mf,"\n\tMOV   "R1H",A");
+    fprintf (mf,"\n\tMOV   " R1L ",A");
+    fprintf (mf,"\n\tMOV   " R1H ",A");
     CSize+=3;
   }
   LReg=2;
@@ -462,35 +462,35 @@ void I8051Processor::porovimm() {
   ah = a>>8&0xff;
 
   if (ah &&  al) {
-    fprintf (mf,"\n\tMOV   A,"R1L);
+    fprintf (mf,"\n\tMOV   A," R1L);
     fprintf (mf,"\n\tXRL   A,#0%XH",al);
-    fprintf (mf,"\n\tMOV   "R2L",A");
-    fprintf (mf,"\n\tMOV   A,"R1H);
+    fprintf (mf,"\n\tMOV   " R2L ",A");
+    fprintf (mf,"\n\tMOV   A," R1H);
     fprintf (mf,"\n\tXRL   A,#0%XH",ah);
-    fprintf (mf,"\n\tORL   A,"R2L);
+    fprintf (mf,"\n\tORL   A," R2L);
     CSize+=8;
     return;
   }
 
   if (!ah &&  al) {
-    fprintf (mf,"\n\tMOV   A,"R1L);
+    fprintf (mf,"\n\tMOV   A," R1L);
     fprintf (mf,"\n\tXRL   A,#0%XH",al);
-    fprintf (mf,"\n\tORL   A,"R1H);
+    fprintf (mf,"\n\tORL   A," R1H);
     CSize+=4;
     return;
   }
 
   if (ah && !al) {
-    fprintf (mf,"\n\tMOV   A,"R1H);
+    fprintf (mf,"\n\tMOV   A," R1H);
     fprintf (mf,"\n\tXRL   A,#0%XH",ah);
-    fprintf (mf,"\n\tORL   A,"R1L);
+    fprintf (mf,"\n\tORL   A," R1L);
     CSize+=4;
     return;
   }
 
   if (!ah && !al) {
-    fprintf (mf,"\n\tMOV   A,"R1L);
-    fprintf (mf,"\n\tORL   A,"R1H);
+    fprintf (mf,"\n\tMOV   A," R1L);
+    fprintf (mf,"\n\tORL   A," R1H);
     CSize+=2;
     return;
   }
@@ -696,9 +696,9 @@ int  I8051Processor::c_retval() {
 void I8051Processor::c_skpb() {  /*--- predani skutecneho parametru typu BIT                 */
   push_a();
   fprintf (mf,"\n\tCLR   A");
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
   fprintf (mf,"\n\tMOV   ACC.0,C");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=5;
   LReg=2;
   c_popl();
@@ -754,18 +754,18 @@ void I8051Processor::c_spba (unsigned long int a) {      /*  vytvor bit adr oper
   if (o) {
     fprintf (mf,"\n\tMOV   A,#%d",o&0xff);
     fprintf (mf,"\n\tADD   A,R0");
-    fprintf (mf,"\n\tMOV   "R1L",A");
+    fprintf (mf,"\n\tMOV   " R1L ",A");
     CSize+=4;
   } else {
-    fprintf (mf,"\n\tMOV   "R1L",AR0");
+    fprintf (mf,"\n\tMOV   " R1L ",AR0");
     CSize+=2;
   }
-  fprintf (mf,"\n\tMOV   "R1H",#_HSP");
+  fprintf (mf,"\n\tMOV   " R1H ",#_HSP");
   LReg=2;
   push_a();
   fprintf (mf,"\n\tCLR   A");
-  fprintf (mf,"\n\tMOV   "R1L",A");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=5;
   LReg=2;
 }
@@ -780,13 +780,13 @@ void I8051Processor::c_spa (unsigned long int a) {       /*  vytvor adr operandu
   if (o) {
     fprintf (mf,"\n\tMOV   A,#%d",o&0xff);
     fprintf (mf,"\n\tADD   A,R0");
-    fprintf (mf,"\n\tMOV   "R1L",A");
+    fprintf (mf,"\n\tMOV   " R1L ",A");
     CSize+=4;
   } else {
-    fprintf (mf,"\n\tMOV   "R1L",AR0");
+    fprintf (mf,"\n\tMOV   " R1L ",AR0");
     CSize+=2;
   }
-  fprintf (mf,"\n\tMOV   "R1H",#_HSP");
+  fprintf (mf,"\n\tMOV   " R1H ",#_HSP");
   CSize+=2;
   LReg=2;
 }
@@ -809,22 +809,22 @@ void I8051Processor::c_ldwd (unsigned long int n) { /*  load direct operand     
   push_a();
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
   CSize+=8;
   LReg=2;
 }
 
 void I8051Processor::c_ldwi() {                    /*  load indirect operand          */
-  fprintf (mf,"\n\tMOV   DPL,"R1L);
-  fprintf (mf,"\n\tMOV   DPH,"R1H);
+  fprintf (mf,"\n\tMOV   DPL," R1L);
+  fprintf (mf,"\n\tMOV   DPH," R1H);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
   CSize+=9;
 }
 
@@ -892,10 +892,10 @@ void I8051Processor::c_stwd (unsigned long int n) { /*  store direct operand    
   PredefAdr (n);
   n=n>>3;
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n);
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tMOVX  @DPTR,A");
   fprintf (mf,"\n\tINC   DPTR");
-  fprintf (mf,"\n\tMOV   A,"R1L);
+  fprintf (mf,"\n\tMOV   A," R1L);
   fprintf (mf,"\n\tMOVX  @DPTR,A");
   SpecVar (n);
   CSize+=8;
@@ -904,12 +904,12 @@ void I8051Processor::c_stwd (unsigned long int n) { /*  store direct operand    
 
 void I8051Processor::c_stwi (/*unsigned long int n*/) { /*  store indirect operand         */
   pop_b();
-  fprintf (mf,"\n\tMOV   DPL,"R1L);
-  fprintf (mf,"\n\tMOV   DPH,"R1H);
-  fprintf (mf,"\n\tMOV   A,"R2H);
+  fprintf (mf,"\n\tMOV   DPL," R1L);
+  fprintf (mf,"\n\tMOV   DPH," R1H);
+  fprintf (mf,"\n\tMOV   A," R2H);
   fprintf (mf,"\n\tMOVX  @DPTR,A");
   fprintf (mf,"\n\tINC   DPTR");
-  fprintf (mf,"\n\tMOV   A,"R2L);
+  fprintf (mf,"\n\tMOV   A," R2L);
   fprintf (mf,"\n\tMOVX  @DPTR,A");
   CSize+=9;
   pop_a();
@@ -923,12 +923,12 @@ void I8051Processor::c_addwim() {
   unsigned int a;
   a=SemPop();
   if (a) {
-    fprintf (mf,"\n\tMOV   A,"R1L);
+    fprintf (mf,"\n\tMOV   A," R1L);
     fprintf (mf,"\n\tADD   A,#0%XH",a&0xff);
-    fprintf (mf,"\n\tMOV   "R1L",A");
-    fprintf (mf,"\n\tMOV   A,"R1H);
+    fprintf (mf,"\n\tMOV   " R1L ",A");
+    fprintf (mf,"\n\tMOV   A," R1H);
     fprintf (mf,"\n\tADDC  A,#0%XH", (a>>8) &0xff);
-    fprintf (mf,"\n\tMOV   "R1H",A");
+    fprintf (mf,"\n\tMOV   " R1H ",A");
     CSize+=8;
   }
 }
@@ -938,8 +938,8 @@ void I8051Processor::c_addwd (unsigned long int n) {
   n=n>>3;
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n+1);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tADD   A,"R1L);
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tADD   A," R1L);
+  fprintf (mf,"\n\tMOV   " R1L ",A");
 
   fprintf (mf,"\n\tDEC   DPL");
   if ( ( (n+1) &0xff00) != (n&0xff00)) {
@@ -947,8 +947,8 @@ void I8051Processor::c_addwd (unsigned long int n) {
     CSize+=1;
   }
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tADDC  A,"R1H);
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tADDC  A," R1H);
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=10;
 }
 
@@ -970,12 +970,12 @@ void I8051Processor::c_subwim() {
   a  = -SemPop();
   al = a&0xff;
   ah = a>>8;
-  fprintf (mf,"\n\tMOV   A,"R1L);
+  fprintf (mf,"\n\tMOV   A," R1L);
   fprintf (mf,"\n\tADD   A,#0%XH",al&0xff);
-  fprintf (mf,"\n\tMOV   "R1L",A");
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   " R1L ",A");
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tADDC  A,#0%XH",ah&0xff);
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=8;
 }
 
@@ -985,9 +985,9 @@ void I8051Processor::c_subwd (unsigned long int n) {
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n+1);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
   fprintf (mf,"\n\tCLR   C");
-  fprintf (mf,"\n\tXCH   A,"R1L);
-  fprintf (mf,"\n\tSUBB  A,"R1L);
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tXCH   A," R1L);
+  fprintf (mf,"\n\tSUBB  A," R1L);
+  fprintf (mf,"\n\tMOV   " R1L ",A");
 
   fprintf (mf,"\n\tDEC   DPL");
   if ( ( (n+1) &0xff00) != (n&0xff00)) {
@@ -995,9 +995,9 @@ void I8051Processor::c_subwd (unsigned long int n) {
     CSize+=1;
   }
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tXCH   A,"R1H);
-  fprintf (mf,"\n\tSUBB  A,"R1H);
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tXCH   A," R1H);
+  fprintf (mf,"\n\tSUBB  A," R1H);
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=13;
 }
 
@@ -1016,8 +1016,8 @@ void I8051Processor::c_mulwim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WMULTR);
 }
@@ -1026,10 +1026,10 @@ void I8051Processor::c_mulwd (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WMULTR);
 }
@@ -1043,8 +1043,8 @@ void I8051Processor::c_muliim() {
   unsigned int a;
   a=SemPop();
   if (a==1) return;
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WMULTR);
 }
@@ -1053,10 +1053,10 @@ void I8051Processor::c_mulid (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WMULTR);
 }
@@ -1075,8 +1075,8 @@ void I8051Processor::c_divwim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WDIVR);
 }
@@ -1085,10 +1085,10 @@ void I8051Processor::c_divwd (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WDIVR);
 }
@@ -1103,8 +1103,8 @@ void I8051Processor::c_diviim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (IDIVR);
 }
@@ -1113,10 +1113,10 @@ void I8051Processor::c_divid (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (IDIVR);
 }
@@ -1127,16 +1127,16 @@ void I8051Processor::c_divi() {
 }
 
 void I8051Processor::c_absi() {
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tJNB   ACC.7,_L%05d",++LblNum);
-  fprintf (mf,"\n\tMOV   A,"R1L);
+  fprintf (mf,"\n\tMOV   A," R1L);
   fprintf (mf,"\n\tCPL   A");
   fprintf (mf,"\n\tADD   A,#1");
-  fprintf (mf,"\n\tMOV   "R1L",A");
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   " R1L ",A");
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tCPL   A");
   fprintf (mf,"\n\tADDC  A,#0");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   fprintf (mf,"\n_L%05d:",LblNum);
   CSize+=12;
 }
@@ -1160,14 +1160,14 @@ void I8051Processor::c_swap() {
 
 
 void I8051Processor::c_chsi() {
-  fprintf (mf,"\n\tMOV   A,"R1L);
+  fprintf (mf,"\n\tMOV   A," R1L);
   fprintf (mf,"\n\tCPL   A");
   fprintf (mf,"\n\tADD   A,#1");
-  fprintf (mf,"\n\tMOV   "R1L",A");
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   " R1L ",A");
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tCPL   A");
   fprintf (mf,"\n\tADDC  A,#0");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   CSize+=10;
 }
 
@@ -1532,7 +1532,7 @@ void I8051Processor::c_stbi() {
 }
 
 void I8051Processor::c_retb() {
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tMOV   C,ACC.0");
   CSize+=3;
   pop_a();
@@ -1592,8 +1592,8 @@ void I8051Processor::c_testpole() {
   a=SemPop();
 
   // printf("\n\n%ld\n\n",a);
-  fprintf (mf,"\n\tMOV   "R2L",#0%lXH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%lXH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%lXH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%lXH", (a>>8) &0xff);
 
   CSize+=4;
   rcall (TPOLE);
@@ -1612,8 +1612,8 @@ void I8051Processor::c_andwim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WANDR);
 }
@@ -1622,10 +1622,10 @@ void I8051Processor::c_andwd (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WANDR);
 }
@@ -1640,8 +1640,8 @@ void I8051Processor::c_orwim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WORR);
 }
@@ -1650,10 +1650,10 @@ void I8051Processor::c_orwd (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WORR);
 }
@@ -1668,8 +1668,8 @@ void I8051Processor::c_xorwim() {
   a=SemPop();
   if (a==1) return;
 
-  fprintf (mf,"\n\tMOV   "R2L",#0%XH",a&0xff);
-  fprintf (mf,"\n\tMOV   "R2H",#0%XH", (a>>8) &0xff);
+  fprintf (mf,"\n\tMOV   " R2L ",#0%XH",a&0xff);
+  fprintf (mf,"\n\tMOV   " R2H ",#0%XH", (a>>8) &0xff);
   CSize+=4;
   rcall (WXORR);
 }
@@ -1678,10 +1678,10 @@ void I8051Processor::c_xorwd (unsigned long int n) {
   PredefAdr (n);
   fprintf (mf,"\n\tMOV   DPTR,#0%lXH",n>>3);
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2H",A");
+  fprintf (mf,"\n\tMOV   " R2H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R2L",A");
+  fprintf (mf,"\n\tMOV   " R2L ",A");
   CSize+=8;
   rcall (WXORR);
 }
@@ -1693,9 +1693,9 @@ void I8051Processor::c_xorw() {
 
 void I8051Processor::c_memwrite() {
   // nacteni docasne ulozeni hodnoty
-  fprintf (mf,"\n\tMOV   A,"R1H);
+  fprintf (mf,"\n\tMOV   A," R1H);
   fprintf (mf,"\n\tMOV   R2,A");
-  fprintf (mf,"\n\tMOV   A,"R1L);
+  fprintf (mf,"\n\tMOV   A," R1L);
   fprintf (mf,"\n\tMOV   R3,A");
   CSize+=4;
 
@@ -1711,8 +1711,8 @@ void I8051Processor::c_memwrite() {
   fprintf (mf,"\n\tJNZ   _L%05d",++LblNum);
 
   // nastaveni offsetu ve strance
-  fprintf (mf,"\n\tMOV   DPH,"R1H);
-  fprintf (mf,"\n\tMOV   DPL,"R1L);
+  fprintf (mf,"\n\tMOV   DPH," R1H);
+  fprintf (mf,"\n\tMOV   DPL," R1L);
   CSize+=14;
 
   // zapis hodnoty
@@ -1741,21 +1741,21 @@ void I8051Processor::c_memread() {
   fprintf (mf,"\n\tJZ   _L%05d",++LblNum);
   lb = LblNum;
   fprintf (mf,"\n\tMOV   A,#00h");
-  fprintf (mf,"\n\tMOV   "R1H",A");
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
   fprintf (mf,"\n\tSJMP  _L%05d",++LblNum);
   CSize+=16;
 
   fprintf (mf,"\n_L%05d:",lb);
-  fprintf (mf,"\n\tMOV   DPH,"R1H);
-  fprintf (mf,"\n\tMOV   DPL,"R1L);
+  fprintf (mf,"\n\tMOV   DPH," R1H);
+  fprintf (mf,"\n\tMOV   DPL," R1L);
   CSize+=4;
 
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1H",A");
+  fprintf (mf,"\n\tMOV   " R1H ",A");
   fprintf (mf,"\n\tINC   DPTR");
   fprintf (mf,"\n\tMOVX  A,@DPTR");
-  fprintf (mf,"\n\tMOV   "R1L",A");
+  fprintf (mf,"\n\tMOV   " R1L ",A");
   fprintf (mf,"\n_L%05d:",LblNum);
   fprintf (mf,"\n\tMOV   084h,#00h"); // mov  DPP,#0
   CSize+=8;

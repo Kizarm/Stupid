@@ -138,7 +138,7 @@ void CLexem::FileInit (string file) {
 //  Uzavreni vstupniho souboru
 //////////////////////////////////////////////////////////////////////
 void CLexem::FileClose() {
-  if (m_inFile != NULL) {
+  if (m_inFile.good()) {
     m_inFile.close();
   }
 }
@@ -249,9 +249,11 @@ void CLexem::GetNextToken() {
       }
       m_Token.Class = KeyWord (m_Token.Repr.c_str());
       break;
-      // nesmysl
+    //case '\xFF':  // sem se to kdovi proc dostane, ignorujme
+    //  break;
+    // nesmysl
     default:
-      sprintf (error, "Nepovoleny vstupni znak \'%c\'", m_cLastChar);
+      sprintf (error, "Nepovoleny vstupni znak \'0x%02X\'", (unsigned char) m_cLastChar);
       throw CSyntaxError (this, error);
   }
 }
