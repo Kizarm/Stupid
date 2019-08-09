@@ -1,0 +1,2 @@
+#TI USB 3410 pro UBUNTU 16.04
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="a051", ATTRS{idProduct}=="0485",GROUP="dialout", MODE="0666"

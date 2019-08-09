@@ -1,0 +1,23 @@
+# kdevelop
+.kde*
+*.kdev4
+# objects
+*.o
+# stupids
+*.stp
+# Qt temp
+ui_*.h
+moc_*.cpp
+qrc_*.cpp
+# temps
+bin/pesim
+bin/stupid
+posix/Simple
+Makefile
+src/Makefile
+src/pesim/Makefile
+src/pesim/app/Makefile
+posix/lib/libasmapi.a
+posix/lib/libpesim.a
+posix/lib/libstpapi.a
+

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo cp 90_hypel_usb485.rules /etc/udev/rules.d/
+sudo cp ti_usb-v0451-p3410.fw /lib/firmware/
