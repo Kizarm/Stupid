@@ -3,13 +3,13 @@ PR = ../lib/libasmapi.a
 CC = gcc
 #CC = clang-3.5
 CXX= g++
-CFLAGS  = -Os -g
+CFLAGS  = -Os
 CFLAGS += -Wall
 #CFLAGS += -Wno-parentheses -Wno-write-strings
-CFLAGS += -ffunction-sections -fdata-sections
+#CFLAGS += -ffunction-sections -fdata-sections
 MFLAGS = -o $(PR)
 #LFLAGS = -lm
-LFLAGS = -Wl,--gc-sections,-Map=stpasm.map
+#LFLAGS = -Wl,--gc-sections,-Map=stpasm.map
 
 all: $(PR)
 

@@ -1,7 +1,7 @@
 PR = Simple
 CC = gcc
 CXX= g++
-CFLAGS  = -Os -g
+CFLAGS  = -Os
 CFLAGS += -Wall
 CFLAGS += -I./lib
 

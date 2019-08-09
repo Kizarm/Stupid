@@ -85,7 +85,8 @@ class WatchElement {
     virtual void SetAliases    (const char * dsc, int from, int to);
     /// Destruktor
     virtual ~WatchElement () {
-      if (input) delete input; if (aliases) delete aliases;
+      if (input) delete input;
+      if (aliases) delete aliases;
     };
   public:
     CPesNet      * pes;         //!< udržuje ukazatel na ovladač.
