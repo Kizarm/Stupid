@@ -43,9 +43,9 @@ void ApiNetDriver (WORD * ptr, WORD newdata) {
   char buf [max];
   unsigned char hdr = GIODescriptor.NetAddr;//0x6F;
 #if  __SIZEOF_SIZE_T__ == 8
-  unsigned len = snprintf(buf, max, "#%02X:%02lX%04X\r\n", hdr, index, (newdata));
+  unsigned len = snprintf(buf, max, "#%02X:%02lX%04X\r\n", hdr, index, /*swap_bytes*/ (newdata));
 #else
-  unsigned len = snprintf(buf, max, "#%02X:%02X%04X\r\n", hdr, index, (newdata));
+  unsigned len = snprintf(buf, max, "#%02X:%02X%04X\r\n",  hdr, index, /*swap_bytes*/ (newdata));
 #endif
   //printf("%s", buf);
   GIODescriptor.wrap->send (buf, len);

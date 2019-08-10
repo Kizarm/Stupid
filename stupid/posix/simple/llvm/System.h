@@ -424,14 +424,15 @@ struct SystemVariables {
             WORD X5          :1;     /* 1005 */
             WORD X6          :1;     /* 1006 */
             WORD X7          :1;     /* 1007 */
-            WORD X8          :1;     /* 1008 */
-            WORD X9          :1;     /* 1009 */
-            WORD X10         :1;     /* 100A */
-            WORD X11         :1;     /* 100B */
-            WORD X12         :1;     /* 100C */
-            WORD X13         :1;     /* 100D */
-            WORD X14         :1;     /* 100E */
-            WORD X15         :1;     /* 100F */
+            
+            WORD X8          :1;     // 1008
+            WORD X9          :1;     // 1009
+            WORD X10         :1;     // 100A
+            WORD X11         :1;     // 100B
+            WORD X12         :1;     // 100C
+            WORD X13         :1;     // 100D
+            WORD X14         :1;     // 100E
+            WORD X15         :1;     // 100F
         };
     };
     union {
