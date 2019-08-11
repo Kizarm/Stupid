@@ -41,10 +41,19 @@ void SetRamBasePtr (RamDef_t * ptr) {
 }
 static const unsigned BSHFT = 3;
 static const unsigned BMASK = (1u << BSHFT) - 1u;
+static const unsigned byte_index (const unsigned bitadr) {
+  unsigned index = bitadr >> BSHFT;
+  return index;
+  // pro DX0, DX1, DY0, DY1 obratime poradi bytu. Je to sice nesystemove, ale mohlo by to fungovat,
+  // pokud v GPIO::pass obratim byty
+  if (bitadr <  0x1000) return index;
+  if (bitadr >= 0x1050) return index;
+  return index ^ 1u;
+}
 
 WORD WgetBit (unsigned bitadr) {
   WORD result = 0u;
-  const unsigned index = (bitadr >> BSHFT);
+  const unsigned index = byte_index (bitadr);
   WORD val = RamBasePtr->Bytes [index];
   BYTE ref = (1u << (bitadr & BMASK));
   if (ref & val) { result = 1; }
@@ -52,7 +61,7 @@ WORD WgetBit (unsigned bitadr) {
 }
 void WsetBit (unsigned bitadr, WORD bitvalue) {
   BYTE ref = (1u << (bitadr & BMASK));
-  const unsigned index = (bitadr >> BSHFT);
+  const unsigned index = byte_index (bitadr);
   if (bitvalue) {
     RamBasePtr->Bytes [index] |=  ref;
   } else {
@@ -61,7 +70,7 @@ void WsetBit (unsigned bitadr, WORD bitvalue) {
 }
 void WcplBit (unsigned bitadr) {
   BYTE ref = (1u << (bitadr & BMASK));
-  const unsigned index = (bitadr >> BSHFT);
+  const unsigned index = byte_index (bitadr);
   RamBasePtr->Bytes [index] ^= ref;
 }
 

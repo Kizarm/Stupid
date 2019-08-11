@@ -4,6 +4,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+/**
+ * @file
+ * @brief API překladače jazyka SIMPLE.
+ * 
+ * Základ byl převzat z původních zdrojáků Hypel, ale jsou tam dva velké problémy :
+ * -1. Jazyk nemá bezkontextovou gramatiku, původní parser je dost složitý, poplatný době.
+ * -2. Celá původní aritmetika je vlastně dělána ve velkém indiánu.
+ * 
+ * Endianita je fakticky hodně divná a protože mě tohle na začátku vůbec nenapadlo,
+ * nedá se to už předělat, protože když se do toho hrábne na jedné straně, podělá
+ * se něco jiného úplně jinde. Vlastně vadí jen digitální vstupy a výstupy, nesedí
+ * pak bitové adresy pro původní zdrojáky. Pro DX0, DX1, DY0, DY1 udělám patch,
+ * který bude v simulaci odpovídat původním zdrojákům. Ale není to systémové řešení.
+ * 
+ * Vlastní překladač nejde dotáhnout do konce, protože původní koncepce počítala
+ * s ukládáním na zásobník po bitech. To nejde dostatečně rozumně udělat pro obecný
+ * procesor. Takže chybí funkce s bitovými parametry, ale to se stejně moc nepoužívá.
+ * */
   
 enum LLVMTypeMachine {
   MachineTypeLinux64,
@@ -32,9 +51,9 @@ typedef union _CompilerFlags CompilerFlags;
 /**
  * @brief Hlavní API funkce překladače.
  *
- * Kompatibilní s ANSI C, nepodporuje parametry příkazové řádky, tedy umožní jen
+ * Kód je kompatibilní s ANSI C, nepodporuje parametry příkazové řádky, tedy umožní jen
  * překlad jednoho souboru do formátu *.dnl
- *
+ * 
  * @param arg Zatím jen jednoduché jméno souboru např. arg="cosi.stp", case sensitive.
  * @param flags místo /Cosi z příkazového řádku - nahrazuje jej CompilerFlags::Common
  * @return int 0 při úspěchu
@@ -58,7 +77,7 @@ extern COMPILER_API int Simple (const char * arg, const unsigned flags);
       if (argc < 2) return -1;
       logfile = fopen ("Simple.log", "w");
       LogFce  = Logging;
-      result  = Simple(argv[1]);
+      result  = Simple(argv[1], 0);
       fclose (logfile);
       return result;
     }
