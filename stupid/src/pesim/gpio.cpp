@@ -1,6 +1,13 @@
 #include "DigitalIO.h"
 #include "../pesim/inc/gpio.h"
 
+static inline uint16_t swap_bytes (uint16_t word) {
+  uint16_t result = (word & 0xFF) << 8;
+  result += (word >> 8) & 0xFF;
+  return result;
+}
+
+
 GPIO::GPIO (IOPort * const p, const unsigned int no, const IO_Dir dir, uint16_t * d)
   : port (p), number (no), direction (dir), data(d) {
   unsigned addr = GIODescriptor.NetAddr;
@@ -31,7 +38,8 @@ void GPIO::SetBistable (bool b) {
   port[number].io->SetBistable (b);
 }
 void GPIO::pass ( void ) {
-    uint16_t n = (1<<number);
+  uint16_t n = (1<<number);
+  // n = swap_bytes (n);
   if (direction == IO_Input) {
     bool b = port[number].io->GetState();
     if (b) * data |=  n;

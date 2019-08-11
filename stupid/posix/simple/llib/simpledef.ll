@@ -22,13 +22,13 @@ define void @SetRamBasePtr(%union.RamDef_u* %ptr) #0 {
 
 
 define zeroext i16 @WgetBit(i32 %bitadr) #0 {
-  %1 = lshr i32 %bitadr, 4
-  %2 = load [1024 x i16]*, [1024 x i16]** bitcast (%union.RamDef_u** @RamBasePtr to [1024 x i16]**), align 4
-  %3 = getelementptr inbounds [1024 x i16], [1024 x i16]* %2, i32 0, i32 %1
-  %4 = load i16, i16* %3, align 2
-  %5 = and i32 %bitadr, 15
+  %1 = lshr i32 %bitadr, 3
+  %2 = load [2048 x i8]*, [2048 x i8]** bitcast (%union.RamDef_u** @RamBasePtr to [2048 x i8]**), align 4
+  %3 = getelementptr inbounds [2048 x i8], [2048 x i8]* %2, i32 0, i32 %1
+  %4 = load i8, i8* %3, align 1
+  %5 = and i32 %bitadr, 7
   %6 = shl i32 1, %5
-  %7 = zext i16 %4 to i32
+  %7 = zext i8 %4 to i32
   %8 = and i32 %7, %6
   %not. = icmp ne i32 %8, 0
   %. = zext i1 %not. to i16
@@ -36,46 +36,45 @@ define zeroext i16 @WgetBit(i32 %bitadr) #0 {
 }
 
 define void @WsetBit(i32 %bitadr, i16 zeroext %bitvalue) #0 {
-  %1 = and i32 %bitadr, 15
+  %1 = and i32 %bitadr, 7
   %2 = shl i32 1, %1
-  %3 = icmp eq i16 %bitvalue, 0
-  br i1 %3, label %12, label %4
+  %3 = lshr i32 %bitadr, 3
+  %4 = icmp eq i16 %bitvalue, 0
+  br i1 %4, label %12, label %5
 
-  %5 = lshr i32 %bitadr, 4
-  %6 = load [1024 x i16]*, [1024 x i16]** bitcast (%union.RamDef_u** @RamBasePtr to [1024 x i16]**), align 4
-  %7 = getelementptr inbounds [1024 x i16], [1024 x i16]* %6, i32 0, i32 %5
-  %8 = load i16, i16* %7, align 2
-  %9 = zext i16 %8 to i32
+  %6 = load [2048 x i8]*, [2048 x i8]** bitcast (%union.RamDef_u** @RamBasePtr to [2048 x i8]**), align 4
+  %7 = getelementptr inbounds [2048 x i8], [2048 x i8]* %6, i32 0, i32 %3
+  %8 = load i8, i8* %7, align 1
+  %9 = zext i8 %8 to i32
   %10 = or i32 %9, %2
-  %11 = trunc i32 %10 to i16
-  store i16 %11, i16* %7, align 2
-  br label %21
+  %11 = trunc i32 %10 to i8
+  store i8 %11, i8* %7, align 1
+  br label %20
 
-  %13 = xor i32 %2, 65535
-  %14 = lshr i32 %bitadr, 4
-  %15 = load [1024 x i16]*, [1024 x i16]** bitcast (%union.RamDef_u** @RamBasePtr to [1024 x i16]**), align 4
-  %16 = getelementptr inbounds [1024 x i16], [1024 x i16]* %15, i32 0, i32 %14
-  %17 = load i16, i16* %16, align 2
-  %18 = zext i16 %17 to i32
-  %19 = and i32 %18, %13
-  %20 = trunc i32 %19 to i16
-  store i16 %20, i16* %16, align 2
-  br label %21
+  %13 = xor i32 %2, 255
+  %14 = load [2048 x i8]*, [2048 x i8]** bitcast (%union.RamDef_u** @RamBasePtr to [2048 x i8]**), align 4
+  %15 = getelementptr inbounds [2048 x i8], [2048 x i8]* %14, i32 0, i32 %3
+  %16 = load i8, i8* %15, align 1
+  %17 = zext i8 %16 to i32
+  %18 = and i32 %17, %13
+  %19 = trunc i32 %18 to i8
+  store i8 %19, i8* %15, align 1
+  br label %20
 
   ret void
 }
 
 define void @WcplBit(i32 %bitadr) #0 {
-  %1 = and i32 %bitadr, 15
+  %1 = and i32 %bitadr, 7
   %2 = shl i32 1, %1
-  %3 = lshr i32 %bitadr, 4
-  %4 = load [1024 x i16]*, [1024 x i16]** bitcast (%union.RamDef_u** @RamBasePtr to [1024 x i16]**), align 4
-  %5 = getelementptr inbounds [1024 x i16], [1024 x i16]* %4, i32 0, i32 %3
-  %6 = load i16, i16* %5, align 2
-  %7 = zext i16 %6 to i32
+  %3 = lshr i32 %bitadr, 3
+  %4 = load [2048 x i8]*, [2048 x i8]** bitcast (%union.RamDef_u** @RamBasePtr to [2048 x i8]**), align 4
+  %5 = getelementptr inbounds [2048 x i8], [2048 x i8]* %4, i32 0, i32 %3
+  %6 = load i8, i8* %5, align 1
+  %7 = zext i8 %6 to i32
   %8 = xor i32 %7, %2
-  %9 = trunc i32 %8 to i16
-  store i16 %9, i16* %5, align 2
+  %9 = trunc i32 %8 to i8
+  store i8 %9, i8* %5, align 1
   ret void
 }
 

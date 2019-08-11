@@ -39,24 +39,30 @@ PesApi_t * GetPesApiPtr (void) {
 void SetRamBasePtr (RamDef_t * ptr) {
   RamBasePtr = ptr;
 }
+static const unsigned BSHFT = 3;
+static const unsigned BMASK = (1u << BSHFT) - 1u;
+
 WORD WgetBit (unsigned bitadr) {
   WORD result = 0u;
-  WORD val = RamBasePtr->Words [bitadr >> 4];
-  WORD ref = (1u << (bitadr & 0xF));
+  const unsigned index = (bitadr >> BSHFT);
+  WORD val = RamBasePtr->Bytes [index];
+  BYTE ref = (1u << (bitadr & BMASK));
   if (ref & val) { result = 1; }
   return result;
 }
 void WsetBit (unsigned bitadr, WORD bitvalue) {
-  WORD ref = (1u << (bitadr & 0xF));
+  BYTE ref = (1u << (bitadr & BMASK));
+  const unsigned index = (bitadr >> BSHFT);
   if (bitvalue) {
-    RamBasePtr->Words [bitadr >> 4] |=  ref;
+    RamBasePtr->Bytes [index] |=  ref;
   } else {
-    RamBasePtr->Words [bitadr >> 4] &= ~ref;
+    RamBasePtr->Bytes [index] &= ~ref;
   }
 }
 void WcplBit (unsigned bitadr) {
-  WORD ref = (1u << (bitadr & 0xF));
-  RamBasePtr->Words [bitadr >> 4] ^= ref;
+  BYTE ref = (1u << (bitadr & BMASK));
+  const unsigned index = (bitadr >> BSHFT);
+  RamBasePtr->Bytes [index] ^= ref;
 }
 
 WORD TestPole (const WORD a, const WORD b) {

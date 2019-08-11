@@ -7,6 +7,10 @@
 #include "wrap.h"
 #include "../../posix/simple/llvm/PesApi.h"
 
+static const unsigned repl_table [MaxIO] = {
+  8,9,10,11,12,13,14,15, 0,1,2,3,4,5,6,7
+};
+
 IODescriptors GIODescriptor;
 
 SimDialog::SimDialog (QWidget * par, Qt::WindowFlags flags) 
@@ -23,7 +27,9 @@ SimDialog::SimDialog (QWidget * par, Qt::WindowFlags flags)
   
   bool en;
   
-  for (unsigned i=0; i<MaxIO; i++) {
+  for (unsigned n=0; n<MaxIO; n++) {
+    //unsigned i = repl_table [n];
+    unsigned i = n;
     s.sprintf ("X%d",i);
     DigitalIO * pi = new DigitalIO (this, s, IO_Input);
     en = GIODescriptor.inp[i].used;

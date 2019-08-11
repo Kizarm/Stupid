@@ -42,12 +42,6 @@ void QtWrap::readPendingDatagrams (void) {
     delete [] sdata;
   }
 }
-uint16_t swap_bytes (uint16_t word) {
-  uint16_t result = (word & 0xFF) << 8;
-  result += (word >> 8) & 0xFF;
-  return result;
-}
-
 unsigned int QtWrap::rcvd (const char* data, unsigned int) {
   unsigned naddr, addr, value; 
   unsigned n = sscanf(data, "#%02X:%02X%04X\r\n", &naddr, &addr, &value);

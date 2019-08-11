@@ -17,7 +17,7 @@ class DigitalIO;
 class AnalogINP;
 class AnalogOUT;
 
-static const unsigned MaxIO = 12;
+static const unsigned MaxIO = 16;
 static const unsigned MaxAD = 2;
 
 struct IOPort {

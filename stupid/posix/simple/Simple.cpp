@@ -399,7 +399,7 @@ int Simple (const char * name, const unsigned flags) {
       strncat (copy, ".ll", maxi);
       result = CompileLLtoASFile (copy, MacF, cf.F.TGT);
       if (!result) {
-        remove (copy);
+        //remove (copy);
         result = Linking (cf.F.TGT);
       }
     }

@@ -26,6 +26,11 @@ static GPIO X8 (IOPortX, 8, IO_Input, & Variables.SYS.DX0), Y8 (IOPortY, 8, IO_O
 static GPIO X9 (IOPortX, 9, IO_Input, & Variables.SYS.DX0), Y9 (IOPortY, 9, IO_Output, & Variables.SYS.DY0);
 static GPIO X10(IOPortX,10, IO_Input, & Variables.SYS.DX0), Y10(IOPortY,10, IO_Output, & Variables.SYS.DY0);
 static GPIO X11(IOPortX,11, IO_Input, & Variables.SYS.DX0), Y11(IOPortY,11, IO_Output, & Variables.SYS.DY0);
+static GPIO X12(IOPortX,12, IO_Input, & Variables.SYS.DX0), Y12(IOPortY,12, IO_Output, & Variables.SYS.DY0);
+static GPIO X13(IOPortX,13, IO_Input, & Variables.SYS.DX0), Y13(IOPortY,13, IO_Output, & Variables.SYS.DY0);
+static GPIO X14(IOPortX,14, IO_Input, & Variables.SYS.DX0), Y14(IOPortY,14, IO_Output, & Variables.SYS.DY0);
+static GPIO X15(IOPortX,15, IO_Input, & Variables.SYS.DX0), Y15(IOPortY,15, IO_Output, & Variables.SYS.DY0);
+
 static Timers TIMS;
 // Toto je jedina definice !
 RamDef_t Variables;
