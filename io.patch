@@ -1,0 +1,24 @@
+diff -Naurw ./old/Stupid/stupid/posix/simple/llib/simpledef.c ./new/Stupid/stupid/posix/simple/llib/simpledef.c
+--- ./old/Stupid/stupid/posix/simple/llib/simpledef.c	2019-08-11 19:14:46.017890646 +0200
++++ ./new/Stupid/stupid/posix/simple/llib/simpledef.c	2019-08-11 19:16:45.732347507 +0200
+@@ -43,7 +43,7 @@
+ static const unsigned BMASK = (1u << BSHFT) - 1u;
+ static const unsigned byte_index (const unsigned bitadr) {
+   unsigned index = bitadr >> BSHFT;
+-  return index;
++  // return index;
+   // pro DX0, DX1, DY0, DY1 obratime poradi bytu. Je to sice nesystemove, ale mohlo by to fungovat,
+   // pokud v GPIO::pass obratim byty
+   if (bitadr <  0x1000) return index;
+diff -Naurw ./old/Stupid/stupid/src/pesim/gpio.cpp ./new/Stupid/stupid/src/pesim/gpio.cpp
+--- ./old/Stupid/stupid/src/pesim/gpio.cpp	2019-08-11 19:14:46.029890491 +0200
++++ ./new/Stupid/stupid/src/pesim/gpio.cpp	2019-08-11 19:17:15.575963494 +0200
+@@ -39,7 +39,7 @@
+ }
+ void GPIO::pass ( void ) {
+   uint16_t n = (1<<number);
+-  // n = swap_bytes (n);
++  n = swap_bytes (n);
+   if (direction == IO_Input) {
+     bool b = port[number].io->GetState();
+     if (b) * data |=  n;
