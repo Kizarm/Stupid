@@ -117,11 +117,8 @@ static int Linking (LLVMTypeMachine m) {
   snprintf (soname, maxn, "%s.so", MacF);
   snprintf ( oname, maxn, "%s.o",  MacF);
 //snprintf ( hname, maxn, "%s.hex",MacF);
-#if PC64
+  // na RPi je lepe nainstalobat take gcc-arm-none-eabi, jde to
   const char * prefix = "arm-none-eabi-";
-#else
-  const char * prefix = "";
-#endif
   const char * procty [3] = {"cortex-m0","cortex-m3","cortex-m4"}; 
   const int max = 0x1000;
   char cmd [max];
