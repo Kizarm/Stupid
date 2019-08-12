@@ -11,14 +11,14 @@ ui_*.h
 moc_*.cpp
 qrc_*.cpp
 # temps
-bin/pesim
-bin/stupid
-posix/Simple
-Makefile
-src/Makefile
-src/pesim/Makefile
-src/pesim/app/Makefile
-posix/lib/libasmapi.a
-posix/lib/libpesim.a
-posix/lib/libstpapi.a
+stupid/bin/pesim
+stupid/bin/stupid
+stupid/posix/Simple
+stupid/Makefile
+stupid/src/Makefile
+stupid/src/pesim/Makefile
+stupid/src/pesim/app/Makefile
+stupid/posix/lib/libasmapi.a
+stupid/posix/lib/libpesim.a
+stupid/posix/lib/libstpapi.a
 
