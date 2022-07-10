@@ -84,7 +84,7 @@ class MainWindow : public QMainWindow {
     QSettings * GetSettings (void) {return setting;};
     CPesNet   * GetNetDriver(void) {return pes;};
     void SetNetDriver(CPesNet * p) {pes=p;};
-    //void    Progress   (const char * text);
+    // void    Progress   (const char * text);
     void        DisplayStr  (const char * msg);
 
   public slots:

@@ -37,6 +37,7 @@ class ViewDialog : public QDialog {
     void AddFileWatchs     (const QString & filename);
     void SetDnlItemPointer (DnlItem * ptr);
     void TargetChanged     (LLVMTypeMachine tgt);
+    CPesNet * getPes () {return pes;}
     ~ViewDialog();
   public slots:
     void StartWatching (void);

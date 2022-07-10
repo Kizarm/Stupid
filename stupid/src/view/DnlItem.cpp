@@ -146,9 +146,14 @@ bool DnlVariables::addTree (void) {
   if (var.isEmpty()) return false;
   if (!item)         return false;
   item->removeAllOld();
+  /*
   int i, n = var.count();
   for (i=0; i<n; i++) {
     if (!item->addVariable(var.at(i))) return false;
+  }
+  */
+  for (const VariableDesc & vd: var) {
+    if (!item->addVariable(vd)) return false;
   }
   //print();
   return true;

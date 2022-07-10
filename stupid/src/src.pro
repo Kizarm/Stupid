@@ -1,11 +1,12 @@
 QT     += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+QMAKE_CXXFLAGS += -std=c++14 -Wno-unused-variable
 
 TARGET = stupid
 TEMPLATE = app
 CONFIG += warn_on \
           thread \
-          qt
+          qt debug
 QT += network
 
 INCLUDEPATH += ./view

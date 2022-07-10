@@ -47,6 +47,7 @@ MainWindow::MainWindow (QWidget * parent)
   menuBar()->addMenu  (menuNet);
   setting  = new QSettings ("KizarmSoft", "Stupid");
   viewer   = new ViewDialog (this);
+  // pes      = viewer->getPes ();
   simulace = new SimDialog  (this);
   acWiew   = ui->toolBar->addAction (QIcon(":diag"), tr ("Viewer"), viewer, SLOT (StartWatching()));
   acWiew->setShortcut (QKeySequence (Qt::Key_F9));

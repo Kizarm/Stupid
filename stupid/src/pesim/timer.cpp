@@ -6,13 +6,13 @@
 #include "../../posix/simple/llvm/PesApi.h"
 
 void QueryPerformanceCounter (uint64_t * count) {
-  long            ms; // des. Milliseconds
+  long            ms; // Milliseconds
   time_t          s;  // Seconds
   struct timespec spec;
   clock_gettime(CLOCK_REALTIME, &spec);
   s  = spec.tv_sec;
-  ms = round(spec.tv_nsec / 1.0e7);
-  * count = 100 * s + ms;
+  ms = round(spec.tv_nsec / 1.0e6);
+  * count = 1000 * s + ms;
 }
 
 STimer::STimer () {
@@ -27,7 +27,7 @@ STimer::~STimer() {
 
 void STimer::pass ( void ) {
   QueryPerformanceCounter(&currms);
-  currs = currms / 100;
+  currs = currms / 1000;
   if (currms != lastms) {
     inc_ms = currms - lastms;
     lastms = currms;

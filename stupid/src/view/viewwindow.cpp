@@ -572,7 +572,7 @@ void ViewDialog::RemoveFileWatchs (void) {
   }
 }
 void ViewDialog::AddFileWatchs (const QString & filename) {
-  dnlvar->readFile (filename);
+  if (!dnlvar->readFile (filename)) return;
   RemoveFileWatchs();
   dnlvar->addTree ();
 
