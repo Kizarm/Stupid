@@ -35,7 +35,7 @@ void PlatformSleep (unsigned int msec) {
 #include <string.h>
 
 void AfxMessageBox (const char * msg, int flags, void * ptr) {
-  printf (SRED"ErrMsg: "SBLUE"\"%s\""SDEFC"\n", msg);
+  printf (SRED "ErrMsg: " SBLUE "\"%s\"" SDEFC "\n", msg);
 }
 void CString::Format (const char * fmt, ...) {
   if (data) delete [] data;

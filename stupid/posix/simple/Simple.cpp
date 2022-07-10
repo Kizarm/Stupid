@@ -281,7 +281,7 @@ int CompileLLtoASFile (const char * infile, const char * outfile, LLVMTypeMachin
   const unsigned max = 1024;
   char   cmdbuf [max];
 #if PC64
-  const char * llc = "llc-3.8";
+  const char * llc = "llc";
 #else
   const char * llc = "llc";
 #endif

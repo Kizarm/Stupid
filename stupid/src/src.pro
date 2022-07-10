@@ -1,6 +1,6 @@
-QT     += core gui
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
-QMAKE_CXXFLAGS += -std=c++14 -Wno-unused-variable
+QT += core gui
+QT += widgets printsupport
+QMAKE_CXXFLAGS += -std=c++14
 
 TARGET = stupid
 TEMPLATE = app

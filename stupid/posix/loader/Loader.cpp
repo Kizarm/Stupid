@@ -130,7 +130,7 @@ void CLoaderDlg::Status (const char * pszFormat, ...) {
   m_cInfo.SetCurSel (m_cInfo.GetCurSel() + 1);
   */
   //! TODO: neco s tim udelej
-  printf (SGREEN"%s"SDEFC"\n", buf);
+  printf (SGREEN "%s" SDEFC "\n", buf);
 }
 
 bool CLoaderDlg::ReadDNLFile() {
