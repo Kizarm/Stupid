@@ -323,21 +323,32 @@ static void GetPars() {
 /*  Analyza prikazoveho radku                                                */
 /*---------------------------------------------------------------------------*/
 #ifdef UNIX
-#include <libgen.h>         // dirname
 #include <unistd.h>         // readlink
+static int findLastSlash (char * name) {
+  const size_t len = strlen (name);
+  if (len == 0) return 0;
+  int n = len - 1;
+  while (n) {
+    if (name [n] == '/') break;
+    n -= 1;
+  }
+  n += 1;
+  name [n] = '\0';
+  return n;
+}
 static char * GetConfFileName (const char * filename) {
   const int PATH_MAX = 0x1000;
-  char mpath[PATH_MAX], result [PATH_MAX];
+  char mpath[PATH_MAX];
+  memset (mpath, 0, PATH_MAX);
   ssize_t count = readlink ("/proc/self/exe", mpath, PATH_MAX);
-  const char * path = nullptr;
-  if (count != -1) {
-    path = dirname (mpath);
+  if (count > 0) {
+    findLastSlash (mpath);
+    strcat (mpath, filename);
   } else {
     fprintf (stderr, "error readlink\n");
+    strcat (mpath, filename);
   }
-  snprintf (result, PATH_MAX, "%s/%s", path, filename);
-  char * cfile = strdup (result);
-  return cfile;
+  return strdup (mpath);
 }
 #else
 static char * GetConfFileName (const char * filename) {
