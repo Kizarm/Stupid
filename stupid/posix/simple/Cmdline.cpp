@@ -322,6 +322,28 @@ static void GetPars() {
 /*---------------------------------------------------------------------------*/
 /*  Analyza prikazoveho radku                                                */
 /*---------------------------------------------------------------------------*/
+#ifdef UNIX
+#include <libgen.h>         // dirname
+#include <unistd.h>         // readlink
+static char * GetConfFileName (const char * filename) {
+  const int PATH_MAX = 0x1000;
+  char mpath[PATH_MAX], result [PATH_MAX];
+  ssize_t count = readlink ("/proc/self/exe", mpath, PATH_MAX);
+  const char * path = nullptr;
+  if (count != -1) {
+    path = dirname (mpath);
+  } else {
+    fprintf (stderr, "error readlink\n");
+  }
+  snprintf (result, PATH_MAX, "%s/%s", path, filename);
+  char * cfile = strdup (result);
+  return cfile;
+}
+#else
+static char * GetConfFileName (const char * filename) {
+  return strdup (filename);
+}
+#endif
 
 void AnalCmdLine() {
   static char  CmdLine[256];
@@ -346,7 +368,9 @@ void AnalCmdLine() {
   strcat (SupF,"START.FMW");
   strcat (SysF,"SYSTEM.INC");
   strcat (AsmF,"STPASM.EXE");
-  strcat (CfgF,"simple.scf");
+  char * confFileName = GetConfFileName ("simple.scf");
+  strcat (CfgF,confFileName);
+  free (confFileName);
 
   StringInit (CmdLine);
   GetPars();
