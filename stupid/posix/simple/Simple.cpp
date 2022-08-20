@@ -299,7 +299,7 @@ int CompileLLtoASFile (const char * infile, const char * outfile, LLVMTypeMachin
                 llc, infile, outfile);
       break;
     case MachineTypeCortexM4F:
-      snprintf (cmdbuf, max, "%s -O3 -function-sections -mcpu=cortex-m4 -mattr=+fp-only-sp,+d16 %s -o %s",
+      snprintf (cmdbuf, max, "%s -O3 -function-sections -mcpu=cortex-m4 %s -o %s",
                 llc, infile, outfile);
       break;
     default:
