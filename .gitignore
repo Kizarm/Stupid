@@ -21,6 +21,7 @@ stupid/src/pesim/app/Makefile
 stupid/posix/lib/libasmapi.a
 stupid/posix/lib/libpesim.a
 stupid/posix/lib/libstpapi.a
+stupid/posix/simple/wasm/libWASM.a
 stupid/src/moc/
 stupid/src/pesim/moc/
 
