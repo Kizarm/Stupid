@@ -16,11 +16,12 @@ int main (int argc,char *argv[]) {
   int result;
   
   if (argc < 2) {
-    fprintf(stdout, "Pouziti:\n\t%s filename.stp [|i|m|c|f]\n", argv[0]);
+    fprintf(stdout, "Pouziti:\n\t%s filename.stp [|i|m|c|f|w]\n", argv[0]);
     fprintf(stdout, " i target native code (*.dll,*.so)\n");
     fprintf(stdout, " m target ARM Cortex-M0\n");
     fprintf(stdout, " c target ARM Cortex-M3\n");
     fprintf(stdout, " f target ARM Cortex-M4F (native floating half size)\n");
+    fprintf(stdout, " w target WASM (+ files for WEB emulation)\n");
     fprintf(stdout, " no parameter - old x52 version\n");
     return 0;
   }
@@ -35,14 +36,14 @@ int main (int argc,char *argv[]) {
   else if (!strcmp (argv[2],"m")) cf.F.TGT = MachineTypeCortexM0;
   else if (!strcmp (argv[2],"c")) cf.F.TGT = MachineTypeCortexM3;
   else if (!strcmp (argv[2],"f")) cf.F.TGT = MachineTypeCortexM4F;
+  else if (!strcmp (argv[2],"w")) cf.F.TGT = MachineTypeWasm;
   else                            cf.F.TGT = LLVMTypesMax;
   } else {
                                   cf.F.TGT = LLVMTypesMax;
   }
   
   //cf.F.TGT = LLVMTypesMax;
-  //cf.F.TGT = MachineTypeCortexM4F;
-  //result = Simple("A.stp" , cf.Common);
+  //result = Simple("Test.stp" , cf.Common);
   result = Simple(argv[1] , cf.Common);
   return result;
 }

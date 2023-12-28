@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>PESIM</title>
+  <style>
+    .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+    textarea.emscripten { font-family: monospace; font-size: 18px; width: 98%; overflow-x: scroll; white-space: pre; background: black; color: rgb(0,255,0);}
+   .frame1  { width: 95%;  margin: auto; padding: 10px;  background-color: #FFFFC0; border: 10px solid #F0C0F0; }
+   .pes     { width: 100%; table-layout:fixed; border: 1px solid blue; border-collapse: collapse; }
+   .hslider { width: 100%; }
+   .progressBar { width: 0%; height: 30px; background-color: orange; text-align: center; line-height: 30px; color: white; }
+   td   { text-align: center; overflow: hidden; border: 1px solid blue;}
+  </style>
+</head>
+<body>
+  <textarea class="emscripten" id="output" rows="10" spellcheck="false"></textarea>
+  <div class="frame1">
+    <table class="pes">
+    <tr>
+      <td id="X0" onclick="Input(this,0);">X0</td>      <td id="X1" onclick="Input(this,1);">X1</td>
+      <td id="X2" onclick="Input(this,2);">X2</td>      <td id="X3" onclick="Input(this,3);">X3</td>
+      <td id="X4" onclick="Input(this,4);">X4</td>      <td id="X5" onclick="Input(this,5);">X5</td>
+      <td id="X6" onclick="Input(this,6);">X6</td>      <td id="X7" onclick="Input(this,7);">X7</td>
+      <td id="X8" onclick="Input(this,8);">X8</td>      <td id="X9" onclick="Input(this,9);">X9</td>
+      <td id="X10" onclick="Input(this,10);">X10</td>   <td id="X11" onclick="Input(this,11);">X11</td>
+      <td id="X12" onclick="Input(this,12);">X12</td>   <td id="X13" onclick="Input(this,13);">X13</td>
+      <td id="X14" onclick="Input(this,14);">X14</td>   <td id="X15" onclick="Input(this,15);">X15</td>
+    </tr>
+    <tr><td style="background-color: #00FF00">I0</td>
+        <td style="border:0px" colspan="15"><input type="range" class="hslider" orient="horizotal" min="0" max="256" id="AI0" oninput="AnalogInput(this, 0);" /></td></tr>
+    <tr><td style="background-color: #00FF00">I1</td>
+        <td style="border:0px" colspan="15"><input type="range" class="hslider" orient="horizotal" min="0" max="256" id="AI1" oninput="AnalogInput(this, 1);" /></td></tr>
+    <tr><td style="background-color: #00FFC0">O0</td>
+        <td style="border:0px" colspan="15"><div class="progressBar" id="AO0"></div></td></tr>
+    <tr><td style="background-color: #00FFC0">O1</td>
+        <td style="border:0px" colspan="15"><div class="progressBar" id="AO1"></div></td></tr>
+    <tr>
+      <td id="Y0">Y0</td>  <td id="Y1">Y1</td>  <td id="Y2">Y2</td>  <td id="Y3">Y3</td>
+      <td id="Y4">Y4</td>  <td id="Y5">Y5</td>  <td id="Y6">Y6</td>  <td id="Y7">Y7</td>
+      <td id="Y8">Y8</td>  <td id="Y9">Y9</td>  <td id="Y10">Y10</td><td id="Y11">Y11</td>
+      <td id="Y12">Y12</td><td id="Y13">Y13</td><td id="Y14">Y14</td><td id="Y15">Y15</td>
+    </tr>
+    </table>
+  </div>
+  <div class="frame1">
+  <h2 id="Display" style="text-align:center">Display</h2>
+  </div>
+  <script type="text/javascript" src="index.js"></script>
+</body>
+</html>

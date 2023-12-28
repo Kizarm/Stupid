@@ -1,0 +1,6 @@
+PrintOut
+memoryGrow
+JsGetMiliseconds
+JSDisplay
+JsSetOutput
+JsAnalogOutput

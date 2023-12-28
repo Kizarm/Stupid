@@ -94,6 +94,7 @@ void MainWindow::setupTarget() {
   psel->addItem(QString::fromUtf8("ARM Cortex M0"));
   psel->addItem(QString::fromUtf8("ARM Cortex M3"));
   psel->addItem(QString::fromUtf8("ARM Cortex M4F"));
+  psel->addItem(QString::fromUtf8("experimental WASM"));
   psel->addItem(QString::fromUtf8("DEFAULT x52"));
   psel->setToolTip(QString::fromUtf8("Výběr cílové architektury"));
   connect (psel, SIGNAL(activated(int)), this, SLOT(changeTarget(int)));

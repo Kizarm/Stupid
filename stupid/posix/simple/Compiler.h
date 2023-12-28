@@ -29,6 +29,7 @@ enum LLVMTypeMachine {
   MachineTypeCortexM0,
   MachineTypeCortexM3,
   MachineTypeCortexM4F,
+  MachineTypeWasm,
   LLVMTypesMax
 };
 

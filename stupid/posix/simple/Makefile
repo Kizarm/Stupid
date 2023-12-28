@@ -42,7 +42,8 @@ OBJECTS+= 60lexem.o
 OBJECTS+= 60list.o
 OBJECTS+= 60zasob.o
 OBJECTS+= 60znak.o
-
+OBJECTS+= restore.o
+OBJECTS+= context.o
 #OBJECTS+= main.o
 
 PLATFRM := $(shell uname -m)
@@ -65,6 +66,9 @@ clean:
 	$(CXX) -std=c++17 -c $(CFLAGS) $<
 %.o: %.s
 	as $< -o $@
+context.s: ./wasm/libWASM.a
+./wasm/libWASM.a:
+	cd ./wasm && $(MAKE) all
 
 $(PR): $(OBJECTS)
 	ar rcs $(PR) $(OBJECTS)

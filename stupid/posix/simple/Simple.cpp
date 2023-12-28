@@ -26,11 +26,12 @@
 #include "inc/LLVMProcessor.h"
 #include "inc/fce.h"
 #include "inc/error.h"
+#include "restore.h"
 
 #include "inc/CfgTypes.h"
 
 #include "../lib/AsmApi.h"
-#include "./llcapi/llcapi.h"
+//#include "./llcapi/llcapi.h"
 
 #define   ERRFILE "Errlist.txt"
 
@@ -127,6 +128,19 @@ static int Linking (LLVMTypeMachine m) {
     if (Exec(cmd)) return 1;
     snprintf (cmd, max, "ld -shared -fPIC %s -o %s", oname, soname);
     if (Exec(cmd)) return 1;
+  } else if (m == MachineTypeWasm) {
+    char outname [maxn];
+    snprintf(outname, maxn, "%s.wasm", MacF);
+    // printf("WASM linking %s - > %s\n", MacF, outname);
+    restore_files (outname);
+    snprintf (cmd, max, "wasm-ld-10 --no-entry --import-memory --lto-O3 --gc-sections"
+              " --allow-undefined-file=symbols.txt %s -o %s -L. -lWASM", MacF, outname);
+    if (Exec(cmd)) {
+      return 1;
+    }
+    remove ("symbols.txt");
+    remove ("libWASM.a");
+    remove (MacF);      
   } else {
     const char * sname = "script.ld";
     FILE * sc = fopen(sname,"w");
@@ -302,6 +316,10 @@ int CompileLLtoASFile (const char * infile, const char * outfile, LLVMTypeMachin
       snprintf (cmdbuf, max, "%s -O3 -function-sections -mcpu=cortex-m4 %s -o %s",
                 llc, infile, outfile);
       break;
+    case MachineTypeWasm:
+      snprintf (cmdbuf, max, "%s --filetype=obj -O2 %s -o %s",
+                llc, infile, outfile);
+      break;
     default:
       return 1;
   }
@@ -326,6 +344,7 @@ int Simple (const char * name, const unsigned flags) {
   case MachineTypeCortexM0:
   case MachineTypeCortexM3:
   case MachineTypeCortexM4F:
+  case MachineTypeWasm:
     BaseProcessorPtr = new  LLVMProcessor (cf.F.TGT);
     break;
   default:
