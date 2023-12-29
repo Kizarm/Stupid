@@ -17,7 +17,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/CodeGen/CommandFlags.inc"
+//#include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/CodeGen/MIRParser/MIRParser.h"
@@ -30,6 +31,7 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Pass.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
@@ -44,7 +46,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+//#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <memory>
 #include <iostream>
@@ -64,17 +66,19 @@ using namespace llvm;
 static std::string InputFilename;
 static std::string OutputFilename;
 //static unsigned TimeCompilations = 1;
+static bool Binary = false;
 
 static int compileModule(const char *, LLVMContext &, LLVMTypeMachine f);
 /// rozhrani
 int CompileLLtoASFile (const char * infile, const char* outfile, LLVMTypeMachine f) {
   InputFilename  = infile;
   OutputFilename = outfile;
+  if (f == MachineTypeWasm) Binary = true;
 
   // Enable debug stream buffering.
   // EnableDebugBuffering = true;
 
-  LLVMContext & Context = getGlobalContext();
+  LLVMContext Context;// = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   
     // Initialize targets first, so that --version shows registered targets.
@@ -90,7 +94,8 @@ int CompileLLtoASFile (const char * infile, const char* outfile, LLVMTypeMachine
     initializeCodeGen                  (*Registry);
     initializeLoopStrengthReducePass   (*Registry);
     initializeLowerIntrinsicsPass      (*Registry);
-    initializeUnreachableBlockElimPass (*Registry);
+    //initializeUnreachableBlockElimPass (*Registry);
+    initializeUnreachableBlockElimLegacyPassPass(*Registry);
     
   // Register the target printer for --version.
   // cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
@@ -118,13 +123,12 @@ static bool EnableDwarfDirectory = false;
 static bool AsmVerbose = true;
 //static bool CompileTwice = false;
 
-static std::unique_ptr<tool_output_file>
+static std::unique_ptr<ToolOutputFile>
 GetOutputStream(const char *TargetName, Triple::OSType OS,
                 const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
-    if (InputFilename == "-")
-      OutputFilename = "-";
+    if (InputFilename == "-") OutputFilename = "-";
     else {
       // If InputFilename ends in .bc or .ll, remove it.
       StringRef IFN = InputFilename;
@@ -136,7 +140,7 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
         OutputFilename = IFN;
 
       switch (FileType) {
-      case TargetMachine::CGFT_AssemblyFile:
+      case CGFT_AssemblyFile:
         if (TargetName[0] == 'c') {
           if (TargetName[1] == 0)
             OutputFilename += ".cbe.c";
@@ -147,26 +151,25 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
         } else
           OutputFilename += ".s";
         break;
-      case TargetMachine::CGFT_ObjectFile:
+      case CGFT_ObjectFile:
         if (OS == Triple::Win32)
           OutputFilename += ".obj";
         else
           OutputFilename += ".o";
         break;
-      case TargetMachine::CGFT_Null:
+      case CGFT_Null:
         OutputFilename += ".null";
         break;
       }
     }
   }
-
+  if (Binary) FileType = CGFT_ObjectFile;
   // Decide if we need "binary" output.
-  bool Binary = false;
   switch (FileType) {
-  case TargetMachine::CGFT_AssemblyFile:
+  case CGFT_AssemblyFile:
     break;
-  case TargetMachine::CGFT_ObjectFile:
-  case TargetMachine::CGFT_Null:
+  case CGFT_ObjectFile:
+  case CGFT_Null:
     Binary = true;
     break;
   }
@@ -174,10 +177,8 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
   // Open the file.
   std::error_code EC;
   sys::fs::OpenFlags OpenFlags = sys::fs::F_None;
-  if (!Binary)
-    OpenFlags |= sys::fs::F_Text;
-  auto FDOut = llvm::make_unique<tool_output_file>(OutputFilename, EC,
-                                                   OpenFlags);
+  if (!Binary) OpenFlags |= sys::fs::F_Text;
+  auto FDOut = std::make_unique<ToolOutputFile>(OutputFilename, EC, OpenFlags);
   if (EC) {
     errs() << EC.message() << '\n';
     return nullptr;
@@ -202,7 +203,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
     if (StringRef(InputFilename).endswith_lower(".mir")) {
       MIR = createMIRParserFromFile(InputFilename, Err, Context);
       if (MIR) {
-        M = MIR->parseLLVMModule();
+        M = MIR->parseIRModule();
         assert(M && "parseLLVMModule should exit on failure");
       }
     } else
@@ -261,7 +262,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
   
   Options.DataSections     = true;
   Options.FunctionSections = true;
-  Reloc::Model mrel = Reloc::Default;
+  Reloc::Model mrel = Reloc::Static;
   switch (mp) {
     case MachineTypeCortexM3:
       TheTriple.setTriple ("thumbv7m--");
@@ -273,7 +274,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
       FeaturesStr = "+fp-only-sp,+d16";
       break;
     default:
-      Options.PositionIndependentExecutable = true;
+      //Options.PositionIndependentExecutable = true;
       mrel = Reloc::PIC_;
       break;
   }
@@ -282,7 +283,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
   << " FeaturesStr: " << FeaturesStr << " RelocModel: " << mrel << "\n";
 
   mTarget = TheTarget->createTargetMachine(TheTriple.getTriple(), CPUStr, FeaturesStr,
-                                     Options, mrel, CMModel, OLvl);
+                                     Options, mrel, getCodeModel(), OLvl);
 
   assert(mTarget && "Could not allocate target machine!");
 
@@ -297,7 +298,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
     Options.FloatABIType = FloatABIForCalls;
 
   // Figure out where we are going to send the output.
-  std::unique_ptr<tool_output_file> Out =
+  std::unique_ptr<ToolOutputFile> Out =
       GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argvn);
   if (!Out) return 1;
 
@@ -317,7 +318,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
   SmallVector<char, 0> Buffer;
   std::unique_ptr<raw_svector_ostream> BOS;
   
-  if (mTarget->addPassesToEmitFile(PM, *OS, FileType, NoVerify)) {
+  if (mTarget->addPassesToEmitFile(PM, *OS, nullptr, FileType, NoVerify)) {
     errs() << argvn << ": target does not support generation of this"
             << " file type!\n";
     return 1;

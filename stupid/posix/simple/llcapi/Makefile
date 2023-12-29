@@ -1,17 +1,15 @@
 EXES = ctest
 SLIB = ../../lib/libllcstp.so
 
-CXX := clang++-3.8
+CXX := clang++
 RTTIFLAG := -fno-rtti
-CXXFLAGS := $(shell llvm-config-3.8 --cxxflags) $(RTTIFLAG)
-LLVMLDFLAGS := $(shell llvm-config-3.8 --ldflags --libs) -ldl
+CXXFLAGS := $(shell llvm-config --cxxflags) -Oz $(RTTIFLAG)
+LLVMLDFLAGS := $(shell llvm-config --ldflags --libs) -ldl
 
-OBJECTS = main.o
+OBJECTS = llcapi.o main.o
 
 CLANGLIBS = -lpthread
 CLANGLIBS+= -lz -lcurses
-
-SOBJS = llcapi.o
 
 all: $(EXES)
 .PHONY: clean
@@ -20,15 +18,12 @@ llcapi.o: llcapi.cpp
 	$(CXX) -fPIC $(CXXFLAGS) -c -o $@ $<
 
 %.o: %.cpp
-	$(CXX) -O3 -c -o $@ $<
+	$(CXX) -Oz -c -o $@ $<
 
-$(SLIB): $(SOBJS)
-	$(CXX) -o $(SLIB) -shared -fPIC $(SOBJS) $(CLANGLIBS) $(LLVMLDFLAGS)
-	
-$(EXES): $(OBJECTS) $(SLIB)
-	$(CXX) -o $(EXES) $(OBJECTS) -L../../lib -lllcstp
+$(EXES): $(OBJECTS)
+	$(CXX) -o $(EXES) $(OBJECTS) $(CLANGLIBS) $(LLVMLDFLAGS)
 
 clean:
-	-rm -f $(OBJECTS) $(SOBJS) *~
+	-rm -f $(OBJECTS) *~
 	-rm -f $(EXES)
 
