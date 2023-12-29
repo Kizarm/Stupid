@@ -78,7 +78,7 @@ int CompileLLtoASFile (const char * infile, const char* outfile, LLVMTypeMachine
   // Enable debug stream buffering.
   // EnableDebugBuffering = true;
 
-  LLVMContext Context;// = getGlobalContext();
+  LLVMContext Context;  // = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   
     // Initialize targets first, so that --version shows registered targets.
@@ -128,40 +128,7 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
                 const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
-    if (InputFilename == "-") OutputFilename = "-";
-    else {
-      // If InputFilename ends in .bc or .ll, remove it.
-      StringRef IFN = InputFilename;
-      if (IFN.endswith(".bc") || IFN.endswith(".ll"))
-        OutputFilename = IFN.drop_back(3);
-      else if (IFN.endswith(".mir"))
-        OutputFilename = IFN.drop_back(4);
-      else
-        OutputFilename = IFN;
-
-      switch (FileType) {
-      case CGFT_AssemblyFile:
-        if (TargetName[0] == 'c') {
-          if (TargetName[1] == 0)
-            OutputFilename += ".cbe.c";
-          else if (TargetName[1] == 'p' && TargetName[2] == 'p')
-            OutputFilename += ".cpp";
-          else
-            OutputFilename += ".s";
-        } else
-          OutputFilename += ".s";
-        break;
-      case CGFT_ObjectFile:
-        if (OS == Triple::Win32)
-          OutputFilename += ".obj";
-        else
-          OutputFilename += ".o";
-        break;
-      case CGFT_Null:
-        OutputFilename += ".null";
-        break;
-      }
-    }
+    std::cerr << "no outpur file" << std::endl;
   }
   if (Binary) FileType = CGFT_ObjectFile;
   // Decide if we need "binary" output.
@@ -183,7 +150,6 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
     errs() << EC.message() << '\n';
     return nullptr;
   }
-
   return FDOut;
 }
 
@@ -264,6 +230,10 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
   Options.FunctionSections = true;
   Reloc::Model mrel = Reloc::Static;
   switch (mp) {
+    case MachineTypeCortexM0:
+      TheTriple.setTriple ("thumbv6m--");
+      CPUStr = "cortex-m0";
+      break;
     case MachineTypeCortexM3:
       TheTriple.setTriple ("thumbv7m--");
       CPUStr = "cortex-m3";
@@ -272,6 +242,9 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
       TheTriple.setTriple ("thumbv7em--");
       CPUStr = "cortex-m4";
       FeaturesStr = "+fp-only-sp,+d16";
+      break;
+    case MachineTypeWasm:
+      TheTriple.setTriple ("wasm32--");
       break;
     default:
       //Options.PositionIndependentExecutable = true;
@@ -333,7 +306,7 @@ static int compileModule(const char * argvn, LLVMContext &Context, LLVMTypeMachi
   // Declare success.
   Out->keep();
 /*
-  delete mTarget;
+  delete ;
   mTarget = nullptr;
 */
   return 0;
